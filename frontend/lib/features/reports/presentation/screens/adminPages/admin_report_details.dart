@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../../../shared/widgets/appbar.dart';
-import '../../../data/mock/mock_feedback_reports.dart';
+import 'package:frontend/shared/widgets/appbar.dart';
+import 'package:frontend/features/reports/data/mock/mock_feedback_reports.dart';
 
 class AdminReportsDetailScreen extends StatefulWidget {
   final FeedbackReportMock report;

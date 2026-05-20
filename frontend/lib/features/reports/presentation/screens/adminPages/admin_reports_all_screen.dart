@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../shared/widgets/appbar.dart';
-import '../../../data/mock/mock_feedback_reports.dart';
+import 'package:frontend/shared/widgets/appbar.dart';
+import 'package:frontend/features/reports/data/mock/mock_feedback_reports.dart';
 
 class AdminReportsAllScreen extends StatefulWidget {
   const AdminReportsAllScreen({super.key});

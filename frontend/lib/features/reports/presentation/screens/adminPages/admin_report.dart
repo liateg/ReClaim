@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../shared/widgets/appbar.dart';
-import '../../../data/mock/mock_feedback_reports.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/shared/widgets/appbar.dart';
+import 'package:frontend/features/reports/data/mock/mock_feedback_reports.dart';
 
 class AdminReportsScreen extends StatelessWidget {
   const AdminReportsScreen({super.key});
