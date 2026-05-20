@@ -6,17 +6,13 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "loa-test";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "loa-refresh-test";
 
-const generateAccessToken=(user:{id:number,full_name:string,email:string,role:string})=>{
-    const payload={id:user.id,fullName:user.full_name,email:user.email,role:user.role}
-    return jwt.sign(payload,JWT_SECRET,{expiresIn:"72h"})
-}
+const generateAccessToken = (user: { id: number; full_name: string; email: string; role: string }) => {
+  const payload = { id: user.id, full_name: user.full_name, email: user.email, role: user.role };
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "72h" });
+};
 
-const generateRefreshToken = (user: { id: number }) => {
-  return jwt.sign(
-    { id: user.id },
-    REFRESH_SECRET,
-    { expiresIn: "7d" }
-  );
+const generateRefreshToken = (userId: number) => {
+  return jwt.sign({ id: userId }, REFRESH_SECRET, { expiresIn: "7d" });
 };
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -41,17 +37,17 @@ export const registerUser = async (req: Request, res: Response) => {
     // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Insert user
+    // 4. Insert user (use password_hash to match DB schema)
     const newUser = await pool.query(
-      `INSERT INTO users (full_name, email, password, role)
+      `INSERT INTO users (full_name, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, full_name, email`,
+       RETURNING id, full_name, email, role`,
       [fullName, email, hashedPassword, "user"]
     );
 
     const user = newUser.rows[0];
 
-    // 5. Generate tokens (FIXED TYPO HERE)
+    // 5. Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user.id);
 
@@ -63,7 +59,7 @@ export const registerUser = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/auth/refresh",
     });
-const User={id:user.rows[0].id,full_name:user.rows[0].full_name,email:user.rows[0].email}
+  const User = { id: user.id, full_name: user.full_name, email: user.email };
     // 7. Return response
     return res.status(201).json({
       message: "User registered successfully",
@@ -185,7 +181,7 @@ export const logInUser = async (req: Request, res: Response) => {
 
   
     const user = await pool.query(
-      "SELECT id, full_name, email, password, role FROM users WHERE email = $1",
+      "SELECT id, full_name, email, password_hash, role FROM users WHERE email = $1",
       [email]
     );
 
@@ -196,7 +192,7 @@ export const logInUser = async (req: Request, res: Response) => {
     const dbUser = user.rows[0];
 
     
-    const validPassword = await bcrypt.compare(password, dbUser.password);
+    const validPassword = await bcrypt.compare(password, dbUser.password_hash);
 
     if (!validPassword) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -251,10 +247,7 @@ export const refreshToken = async (req: Request, res: Response) => {
 
   try {
     // 1. VERIFY refresh token (use REFRESH_SECRET!)
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_SECRET!
-    ) as { id: number };
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as { id: number };
 
     // 2. Check user still exists
     const user = await pool.query(
