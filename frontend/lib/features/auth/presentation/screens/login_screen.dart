@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/session/app_session.dart';
 import 'package:frontend/shared/widgets/custom_text_field.dart';
 import 'package:frontend/shared/widgets/custom_button.dart';
 import '../../../../utils/router/route_paths.dart';
 import '../../../../utils/theme/app_theme.dart';
+import '../../riverpod/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key}); 
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -50,49 +52,30 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    final result = await ref.read(loginProvider({
+      'email': _emailController.text,
+      'password': _passwordController.text,
+    }).future);
 
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
+    final isLoggedIn = await ref.read(authProvider.future);
 
-    final email = _emailController.text;
-    final password = _passwordController.text;
-
-    final isValidUser = email == 'user@test.com' && password == '123456';
-    final isValidAdmin = email == 'admin@test.com' && password == 'admin123';
-
-    if (isValidUser || isValidAdmin) {
-      setState(() {
-        _isLoading = false;
-      });
-
+    if (isLoggedIn) {
+      final isAdmin = ref.read(isAdminProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Welcome back, ${email.split('@')[0]}!'),
+          content:
+              Text('Welcome back, ${_emailController.text.split('@')[0]}!'),
           backgroundColor: AppTheme.primaryGreenLight,
         ),
       );
 
-      if (isValidAdmin) {
-        AppSession.signIn(
-          role: AppUserRole.admin,
-          email: email,
-          displayName: 'Alexander Thorne',
-        );
+      if (isAdmin) {
         context.go(RoutePaths.adminDashboard);
       } else {
-        AppSession.signIn(
-          role: AppUserRole.user,
-          email: email,
-          displayName: _displayNameFromEmail(email),
-        );
         context.go(RoutePaths.home);
       }
     } else {
       setState(() {
-        _isLoading = false;
         _generalError = 'Invalid email or password. Please try again.';
         _passwordError = 'Incorrect password';
       });
@@ -104,18 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return emailRegex.hasMatch(email);
   }
 
-  String _displayNameFromEmail(String email) {
-    final local = email.split('@').first;
-    return local
-        .split(RegExp(r'[._-]'))
-        .where((s) => s.isNotEmpty)
-        .map(
-          (s) =>
-              '${s[0].toUpperCase()}${s.length > 1 ? s.substring(1).toLowerCase() : ''}',
-        )
-        .join(' ');
-  }
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -125,6 +96,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
@@ -197,11 +170,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 errorText: _passwordError,
               ),
               const SizedBox(height: 24),
-              CustomButton(
-                text: 'Sign in',
-                onPressed: _handleSignIn,
-                isLoading: _isLoading,
-              ),
+              authState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : CustomButton(
+                      text: 'Sign in',
+                      onPressed: _handleSignIn,
+                      isLoading: false,
+                    ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
