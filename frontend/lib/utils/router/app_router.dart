@@ -20,10 +20,17 @@ import '../../features/items/presentation/screens/create_item_screen.dart';
 import '../../features/items/presentation/screens/item_detail_screen.dart' as item_pages;
 import '../../features/profile/profile_screen.dart';
 import '../../features/reports/reports_screen.dart';
+<<<<<<< HEAD
 import '../../features2/data/mock/mock_feedback_reports.dart';
 import '../../features2/presentation/screens/adminPages/admin_report.dart' as admin_reports_v2;
 import '../../features2/presentation/screens/adminPages/admin_report_details.dart';
 import '../../features2/presentation/screens/adminPages/admin_reports_all_screen.dart';
+=======
+import '../../features/reports/data/mock/mock_feedback_reports.dart';
+import '../../features/reports/presentation/screens/adminPages/admin_report.dart' as admin_reports_v2;
+import '../../features/reports/presentation/screens/adminPages/admin_report_details.dart';
+import '../../features/reports/presentation/screens/adminPages/admin_reports_all_screen.dart';
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
 import 'route_paths.dart';
 
 final GoRouter appRouter = GoRouter(

@@ -8,6 +8,7 @@ import '../../data/mock/mock_claims.dart';
 import 'claim_withdraw.dart';
 import 'claim_delete.dart';
 
+<<<<<<< HEAD
 class ClaimsScreen extends StatefulWidget {
   const ClaimsScreen({super.key});
 
@@ -20,6 +21,12 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
   String statusType = "All";
 
   @override
+=======
+class ClaimsScreen extends StatelessWidget {
+  const ClaimsScreen({super.key});
+
+  @override
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
   Widget build(BuildContext context) {
     if (mockClaims.isEmpty) {
       return const ClaimEmptyScreen();
@@ -27,6 +34,7 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.detailScreenBackground,
+<<<<<<< HEAD
       appBar: CustomAppBar(
         title: 'My Claims',
         back: false,
@@ -61,6 +69,12 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
           ),
 
 >>>>>>> bf5bcaa7f1c7ba9c155109351553e23cf31247b4
+=======
+      appBar: CustomAppBar(title: 'My Claims', back: false),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Text(
@@ -69,6 +83,7 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
             ),
           ),
 
+<<<<<<< HEAD
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
@@ -151,6 +166,15 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
                 }).toList();
 
                 final claimObj = filteredClaims[index];
+=======
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: mockClaims.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                final claimObj = mockClaims[index];
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
 
                 final claimMap = {
                   'id': claimObj.id,
@@ -165,7 +189,10 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
                   'imageUrl': claimObj.imageUrl ?? '',
                   'filedDate': claimObj.date.toString().split(' ')[0],
                 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
                 final status = claimMap['status'] ?? 'PENDING';
                 final isPending = status == 'PENDING';
 
@@ -173,9 +200,13 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
                   claim: claimMap,
                   onWithdraw: () async {
 <<<<<<< HEAD
+<<<<<<< HEAD
                    
 =======
 >>>>>>> bf5bcaa7f1c7ba9c155109351553e23cf31247b4
+=======
+                   
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
                     if (isPending) {
                       await showClaimWithdrawDialog(context);
                     } else {
@@ -191,4 +222,8 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc

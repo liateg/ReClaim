@@ -41,10 +41,13 @@ coverage/
 # misc
 *.tgz
 
+<<<<<<< HEAD
 # ignore compiled JS in src
 src/**/*.js
 src/**/*.js.map
 
+=======
+>>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
 # optional: lock files (choose based on your team)
 # package-lock.json
 # yarn.lock
