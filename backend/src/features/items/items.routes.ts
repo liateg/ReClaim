@@ -2,17 +2,21 @@ import { Router } from "express";
 import {
   createItem,
   deleteItem,
+  getAdminItems,
   getItemById,
   getItems,
   updateItem,
 } from "./items.controller.js";
+import { authenticateToken } from "../../middleware/authentication.middleware.js";
+import { requireAdmin } from "../../middleware/authorization.middleware.js";
 
 const router = Router();
 
-router.get("/", getItems);
-router.post("/", createItem);
-router.get("/:id", getItemById);
-router.put("/:id", updateItem);
-router.delete("/:id", deleteItem);
+router.get("/", authenticateToken, getItems);
+router.get("/admin", authenticateToken, requireAdmin, getAdminItems);
+router.post("/", authenticateToken, createItem);
+router.get("/:id", authenticateToken, getItemById);
+router.put("/:id", authenticateToken, updateItem);
+router.delete("/:id", authenticateToken, deleteItem);
 
 export default router;

@@ -23,7 +23,10 @@ export const requireRoles = (...allowedRoles: UserRole[]) => {
     }
 
     if (!allowedRoles.includes(authReq.auth.role)) {
-      return respondForbidden(res, "You do not have permission to perform this action");
+      return respondForbidden(
+        res,
+        "You do not have permission to perform this action",
+      );
     }
 
     return next();
@@ -93,10 +96,16 @@ export const requireOwnerOrRoles = (
       return res.status(400).json({ message: "Owner identity is required" });
     }
 
-    if (allowedRoles.includes(authReq.auth.role) || String(ownerId) === String(authReq.auth.id)) {
+    if (
+      allowedRoles.includes(authReq.auth.role) ||
+      String(ownerId) === String(authReq.auth.id)
+    ) {
       return next();
     }
 
-    return respondForbidden(res, "You do not have permission to perform this action");
+    return respondForbidden(
+      res,
+      "You do not have permission to perform this action",
+    );
   };
 };

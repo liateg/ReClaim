@@ -2,11 +2,12 @@ import { pool } from "../../config/db.js";
 import { type Request, type Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { type AuthTokenPayload } from "../../types/auth.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "loa-test";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "loa-refresh-test";
 
-const generateAccessToken = (user: { id: number; full_name: string; email: string; role: string }) => {
+const generateAccessToken = (user: AuthTokenPayload) => {
   const payload = { id: user.id, full_name: user.full_name, email: user.email, role: user.role };
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "72h" });
 };
@@ -15,8 +16,24 @@ const generateRefreshToken = (userId: number) => {
   return jwt.sign({ id: userId }, REFRESH_SECRET, { expiresIn: "7d" });
 };
 
+const pickName = (body: { fullName?: string; name?: string }) => {
+  return body.fullName || body.name;
+};
+
+const toPublicUser = (user: { id: number; full_name: string; email: string; role?: string }) => ({
+  id: user.id,
+  full_name: user.full_name,
+  email: user.email,
+  role: user.role,
+});
+
+type RequestWithAuth = Request & {
+  auth?: AuthTokenPayload;
+};
+
 export const registerUser = async (req: Request, res: Response) => {
-  const { fullName, email, password } = req.body;
+  const fullName = pickName(req.body);
+  const { email, password } = req.body;
 
   try {
     // 1. Validate input
@@ -59,11 +76,12 @@ export const registerUser = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/auth/refresh",
     });
-  const User = { id: user.id, full_name: user.full_name, email: user.email };
+  const User = toPublicUser(user);
     // 7. Return response
     return res.status(201).json({
       message: "User registered successfully",
       user:User,
+      token: accessToken,
       accessToken,
     });
 
@@ -98,6 +116,23 @@ export const getUserById = async (req: Request, res: Response) => {
     console.error("Error fetching user:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
+};
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const auth = (req as RequestWithAuth).auth;
+
+  if (!auth) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  return res.status(200).json({
+    user: {
+      id: auth.id,
+      full_name: auth.full_name,
+      email: auth.email,
+      role: auth.role,
+    },
+  });
 };
 
 
@@ -224,10 +259,11 @@ export const logInUser = async (req: Request, res: Response) => {
       message: "Login successful",
       user: {
         id: dbUser.id,
+        role: dbUser.role,
         full_name: dbUser.full_name,
         email: dbUser.email,
-        role: dbUser.role,
       },
+      token: accessToken,
       accessToken,
     });
 

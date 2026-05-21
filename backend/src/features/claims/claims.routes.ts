@@ -12,11 +12,12 @@ import { requireAdmin } from "../../middleware/authorization.middleware.js";
 
 const router = Router();
 
-router.get("/", getClaims);
-router.post("/", createClaim);
-router.get("/:id", getClaimById);
-router.put("/:id", updateClaim);
+router.get("/", authenticateToken, getClaims);
+router.post("/", authenticateToken, createClaim);
+router.get("/:id", authenticateToken, getClaimById);
+router.put("/:id", authenticateToken, updateClaim);
 router.patch("/:id/approve", authenticateToken, requireAdmin, approveClaim);
-router.delete("/:id", deleteClaim);
+router.patch("/:id/review", authenticateToken, requireAdmin, approveClaim);
+router.delete("/:id", authenticateToken, deleteClaim);
 
 export default router;

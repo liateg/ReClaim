@@ -1,18 +1,18 @@
 # Backend Integration Guide
 
-This document describes the backend HTTP API the frontend can use right now.
+This document reflects the current backend API used by the frontend.
 
 ## Base Notes
 
-- The backend expects JSON request bodies for write operations.
-- All feature routes are currently open. Middleware for auth/authorization can be added later without changing the route structure.
-- The API follows a camelCase request body style, while the database uses snake_case columns internally.
-- List endpoints currently return all rows and are sorted by newest first.
-- Auth refresh uses an HTTP-only cookie named `refreshToken`, so frontend requests that rely on refresh must send credentials.
+- Write operations expect JSON request bodies.
+- Authenticated routes expect a bearer token in `Authorization: Bearer <token>`.
+- Refresh flows use the `refreshToken` HTTP-only cookie, so clients must send credentials.
+- The API uses camelCase in requests and responses; the database stays snake_case internally.
+- Claims now belong to the authenticated user, and claim review compares `answerAttempt` with the item’s `verification_answer`.
 
-## Common Response Patterns
+## Common Responses
 
-Success responses usually look like one of these:
+Success responses typically look like one of these:
 
 ```json
 { "message": "..." }
@@ -42,10 +42,14 @@ Success responses usually look like one of these:
 { "claims": [ ... ] }
 ```
 
-Common error responses:
+Common errors:
 
 ```json
-{ "message": "Bad request message" }
+{ "message": "Authentication required" }
+```
+
+```json
+{ "message": "You do not have permission to perform this action" }
 ```
 
 ```json
@@ -56,9 +60,9 @@ Common error responses:
 
 Base path: `/auth`
 
-### Register a User
+### Register
 
-`POST /auth/user`
+`POST /auth/register`
 
 Request body:
 
@@ -78,8 +82,10 @@ Response `201`:
   "user": {
     "id": 1,
     "full_name": "Jane Doe",
-    "email": "jane@example.com"
+    "email": "jane@example.com",
+    "role": "user"
   },
+  "token": "jwt-access-token",
   "accessToken": "jwt-access-token"
 }
 ```
@@ -87,7 +93,7 @@ Response `201`:
 Notes:
 
 - A `refreshToken` cookie is set automatically.
-- The returned `user` object uses `full_name` in this auth flow.
+- `POST /auth/user` is still accepted for backward compatibility.
 
 ### Login
 
@@ -117,36 +123,19 @@ Response `200`:
 }
 ```
 
-Notes:
-
-- A `refreshToken` cookie is set automatically.
-
-### Refresh Access Token
+### Refresh Token
 
 `POST /auth/refresh`
-
-Request body:
-
-```json
-{}
-```
 
 Response `200`:
 
 ```json
-{
-  "accessToken": "new-jwt-access-token"
-}
+{ "accessToken": "new-jwt-access-token" }
 ```
 
-Notes:
+### Current User
 
-- No body is required.
-- Frontend requests must send cookies so the server can read `refreshToken`.
-
-### Get User by ID
-
-`GET /auth/user/:id`
+`GET /auth/me`
 
 Response `200`:
 
@@ -155,42 +144,15 @@ Response `200`:
   "user": {
     "id": 1,
     "full_name": "Jane Doe",
-    "email": "jane@example.com"
+    "email": "jane@example.com",
+    "role": "user"
   }
 }
 ```
 
-### Update User by ID
-
-`PUT /auth/user/:id`
-
-Request body:
-
-```json
-{
-  "fullName": "Jane Updated",
-  "email": "jane.updated@example.com"
-}
-```
-
-Response `200`:
-
-```json
-{
-  "message": "User updated successfully",
-  "user": {
-    "id": 1,
-    "full_name": "Jane Updated",
-    "email": "jane.updated@example.com"
-  }
-}
-```
-
-## Users CRUD
+## Users
 
 Base path: `/users`
-
-This is the full CRUD surface for the users table.
 
 ### List Users
 
@@ -232,44 +194,15 @@ Notes:
 - `role` is optional and defaults to `user`.
 - Allowed roles: `user`, `admin`.
 
-Response `201`:
-
-```json
-{
-  "message": "User created successfully",
-  "user": {
-    "id": 1,
-    "fullName": "Jane Doe",
-    "email": "jane@example.com",
-    "role": "user",
-    "createdAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
-
-### Get User by ID
+### Get User
 
 `GET /users/:id`
-
-Response `200`:
-
-```json
-{
-  "user": {
-    "id": 1,
-    "fullName": "Jane Doe",
-    "email": "jane@example.com",
-    "role": "user",
-    "createdAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
 
 ### Update User
 
 `PUT /users/:id`
 
-Request body can include any of these fields:
+Request body can include:
 
 ```json
 {
@@ -280,39 +213,11 @@ Request body can include any of these fields:
 }
 ```
 
-Notes:
-
-- At least one field must be sent.
-- Allowed roles: `user`, `admin`.
-
-Response `200`:
-
-```json
-{
-  "message": "User updated successfully",
-  "user": {
-    "id": 1,
-    "fullName": "Jane Updated",
-    "email": "jane.updated@example.com",
-    "role": "admin",
-    "createdAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
-
 ### Delete User
 
 `DELETE /users/:id`
 
-Response `200`:
-
-```json
-{
-  "message": "User deleted successfully"
-}
-```
-
-## Items CRUD
+## Items
 
 Base path: `/items`
 
@@ -320,7 +225,9 @@ Base path: `/items`
 
 `GET /items`
 
-Response `200`:
+Auth required.
+
+Response `200` excludes `verificationAnswer`:
 
 ```json
 {
@@ -334,7 +241,6 @@ Response `200`:
       "dateFound": "2026-05-21",
       "imageUrl": null,
       "verificationQuestion": "What is inside?",
-      "verificationAnswer": "Two cards",
       "hiddenDetails": null,
       "status": "available",
       "postedBy": 1,
@@ -345,9 +251,19 @@ Response `200`:
 }
 ```
 
+### Admin List
+
+`GET /items/admin`
+
+Auth + admin required.
+
+Response includes `verificationAnswer`.
+
 ### Create Item
 
 `POST /items`
+
+Auth required.
 
 Request body:
 
@@ -362,139 +278,53 @@ Request body:
   "verificationQuestion": "What is inside?",
   "verificationAnswer": "Two cards",
   "hiddenDetails": "Blue card holder",
-  "status": "available",
-  "postedBy": 1
+  "status": "available"
 }
 ```
 
 Notes:
 
-- Required fields: `title`, `description`, `location`, `dateFound`, `verificationQuestion`, `verificationAnswer`, `postedBy`.
-- Optional fields: `categoryId`, `imageUrl`, `hiddenDetails`, `status`.
+- `postedBy` is taken from the authenticated user.
 - Allowed statuses: `available`, `claimed`, `resolved`.
-- `dateFound` should be sent as an ISO date string like `YYYY-MM-DD`.
 
-Response `201`:
-
-```json
-{
-  "message": "Item created successfully",
-  "item": {
-    "id": 1,
-    "title": "Lost Wallet",
-    "description": "Black leather wallet",
-    "categoryId": 2,
-    "location": "Main Hall",
-    "dateFound": "2026-05-21",
-    "imageUrl": "https://example.com/wallet.jpg",
-    "verificationQuestion": "What is inside?",
-    "verificationAnswer": "Two cards",
-    "hiddenDetails": "Blue card holder",
-    "status": "available",
-    "postedBy": 1,
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
-
-### Get Item by ID
+### Get Item
 
 `GET /items/:id`
 
-Response `200`:
+Auth required.
 
-```json
-{
-  "item": {
-    "id": 1,
-    "title": "Lost Wallet",
-    "description": "Black leather wallet",
-    "categoryId": 2,
-    "location": "Main Hall",
-    "dateFound": "2026-05-21",
-    "imageUrl": null,
-    "verificationQuestion": "What is inside?",
-    "verificationAnswer": "Two cards",
-    "hiddenDetails": null,
-    "status": "available",
-    "postedBy": 1,
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
+- Normal users get the public view.
+- Admins get the full item including `verificationAnswer`.
 
 ### Update Item
 
 `PUT /items/:id`
 
-Request body can include any of these fields:
+Auth required.
 
-```json
-{
-  "title": "Found Wallet",
-  "description": "Updated description",
-  "categoryId": 2,
-  "location": "Reception",
-  "dateFound": "2026-05-22",
-  "imageUrl": "https://example.com/wallet-new.jpg",
-  "verificationQuestion": "What color is it?",
-  "verificationAnswer": "Black",
-  "hiddenDetails": "Blue card holder",
-  "status": "claimed",
-  "postedBy": 1
-}
-```
-
-Notes:
-
-- At least one field must be sent.
-- Allowed statuses: `available`, `claimed`, `resolved`.
-
-Response `200`:
-
-```json
-{
-  "message": "Item updated successfully",
-  "item": {
-    "id": 1,
-    "title": "Found Wallet",
-    "description": "Updated description",
-    "categoryId": 2,
-    "location": "Reception",
-    "dateFound": "2026-05-22",
-    "imageUrl": "https://example.com/wallet-new.jpg",
-    "verificationQuestion": "What color is it?",
-    "verificationAnswer": "Black",
-    "hiddenDetails": "Blue card holder",
-    "status": "claimed",
-    "postedBy": 1,
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:05:00.000Z"
-  }
-}
-```
+- Owners or admins can update.
+- Normal users cannot update someone else’s item.
 
 ### Delete Item
 
 `DELETE /items/:id`
 
-Response `200`:
+Auth required.
 
-```json
-{
-  "message": "Item deleted successfully"
-}
-```
+- Owners or admins can delete.
 
-## Claims CRUD
+## Claims
 
 Base path: `/claims`
 
 ### List Claims
 
 `GET /claims`
+
+Auth required.
+
+- Normal users see only their own claims.
+- Admins see all claims.
 
 Response `200`:
 
@@ -519,117 +349,76 @@ Response `200`:
 
 `POST /claims`
 
+Auth required.
+
 Request body:
 
 ```json
 {
   "itemId": 1,
-  "claimantId": 2,
   "answerAttempt": "Two cards",
-  "status": "pending",
-  "reviewNote": null
+  "status": "pending"
 }
 ```
 
 Notes:
 
-- Required fields: `itemId`, `claimantId`, `answerAttempt`.
-- Optional fields: `status`, `reviewNote`.
-- Allowed statuses: `pending`, `approved`, `rejected`, `withdrawn`.
+- Claims are created for the authenticated user.
+- New claims must start as `pending`.
+- `claimantId` is ignored if sent and must match the authenticated user.
 
-Response `201`:
-
-```json
-{
-  "message": "Claim created successfully",
-  "claim": {
-    "id": 1,
-    "itemId": 1,
-    "claimantId": 2,
-    "answerAttempt": "Two cards",
-    "status": "pending",
-    "reviewNote": null,
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
-
-### Get Claim by ID
+### Get Claim
 
 `GET /claims/:id`
 
-Response `200`:
+Auth required.
 
-```json
-{
-  "claim": {
-    "id": 1,
-    "itemId": 1,
-    "claimantId": 2,
-    "answerAttempt": "Two cards",
-    "status": "pending",
-    "reviewNote": null,
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:00:00.000Z"
-  }
-}
-```
+- Owners or admins can read the claim.
 
 ### Update Claim
 
 `PUT /claims/:id`
 
-Request body can include any of these fields:
+Auth required.
+
+- Owners can withdraw their own claim.
+- Admins can update claim details or status.
+
+### Review Claim
+
+`PATCH /claims/:id/approve`
+
+Auth + admin required.
+
+Request body:
 
 ```json
-{
-  "itemId": 1,
-  "claimantId": 2,
-  "answerAttempt": "Updated answer",
-  "status": "approved",
-  "reviewNote": "Verified by admin"
-}
+{ "reviewNote": "Verified and approved" }
 ```
 
-Notes:
+Behavior:
 
-- At least one field must be sent.
-- Allowed statuses: `pending`, `approved`, `rejected`, `withdrawn`.
+- The backend compares `claims.answer_attempt` with `items.verification_answer`.
+- If they match, the claim becomes `approved`.
+- If they do not match, the claim becomes `rejected`.
+- `reviewNote` is saved when provided.
 
-Response `200`:
+### Alias Review Route
 
-```json
-{
-  "message": "Claim updated successfully",
-  "claim": {
-    "id": 1,
-    "itemId": 1,
-    "claimantId": 2,
-    "answerAttempt": "Updated answer",
-    "status": "approved",
-    "reviewNote": "Verified by admin",
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:05:00.000Z"
-  }
-}
-```
+`PATCH /claims/:id/review`
+
+Same behavior as `/approve`.
 
 ### Delete Claim
 
 `DELETE /claims/:id`
 
-Response `200`:
+Auth required.
 
-```json
-{
-  "message": "Claim deleted successfully"
-}
-```
+- Owners or admins can delete.
 
-## Frontend Integration Tips
+## Frontend Notes
 
-- Use `fetch` or Axios with `Content-Type: application/json` for all POST and PUT calls.
-- For auth refresh flows, send credentials so cookies are included.
-- Keep the request names aligned with the backend contract: `fullName`, `categoryId`, `dateFound`, `answerAttempt`, and so on.
-- If the UI needs the authenticated refresh flow, use the `/auth/login` or `/auth/user` response `accessToken` for bearer auth on the client side.
+- Send `Authorization: Bearer <accessToken>` for protected endpoints.
+- Use `credentials: 'include'` or equivalent when calling refresh.
+- For item detail screens, do not expect `verificationAnswer` unless the caller is an admin.

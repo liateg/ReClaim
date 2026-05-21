@@ -12,8 +12,8 @@ describe("Auth API", () => {
   const testPassword = "MyTestPass!23";
 
   before(async () => {
-    await agent.post("/auth/user").send({
-      fullName: "Reg User",
+    await agent.post("/auth/register").send({
+      name: "Reg User",
       email: testEmail,
       password: testPassword,
     });
@@ -41,5 +41,22 @@ describe("Auth API", () => {
     const refreshRes = await agent.post("/auth/refresh").send();
     expect(refreshRes.status).to.equal(200);
     expect(refreshRes.body).to.have.property("accessToken");
+  });
+
+  it("returns the current user from the access token", async () => {
+    const login = await agent.post("/auth/login").send({
+      email: testEmail,
+      password: testPassword,
+    });
+
+    expect(login.status).to.equal(200);
+
+    const meRes = await agent
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${login.body.accessToken}`);
+
+    expect(meRes.status).to.equal(200);
+    expect(meRes.body.user).to.have.property("id");
+    expect(meRes.body.user).to.have.property("role");
   });
 });

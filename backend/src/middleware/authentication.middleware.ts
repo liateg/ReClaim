@@ -45,7 +45,11 @@ const extractAccessToken = (req: Request) => {
   return null;
 };
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const token = extractAccessToken(req);
 
   if (!token) {

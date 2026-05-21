@@ -1,9 +1,30 @@
 import { type Request, type Response } from "express";
 import { pool } from "../../config/db.js";
+import { type AuthTokenPayload } from "../../types/auth.js";
+
+type AuthedRequest = Request & {
+  auth?: AuthTokenPayload;
+};
 
 const allowedStatuses = new Set(["available", "claimed", "resolved"]);
 
-const itemSelect = `
+const itemSelectPublic = `
+  id,
+  title,
+  description,
+  category_id AS "categoryId",
+  location,
+  date_found AS "dateFound",
+  image_url AS "imageUrl",
+  verification_question AS "verificationQuestion",
+  hidden_details AS "hiddenDetails",
+  status,
+  posted_by AS "postedBy",
+  created_at AS "createdAt",
+  updated_at AS "updatedAt"
+`;
+
+const itemSelectAdmin = `
   id,
   title,
   description,
@@ -20,7 +41,7 @@ const itemSelect = `
   updated_at AS "updatedAt"
 `;
 
-const toItemResponse = (item: Record<string, unknown>) => ({
+const toPublicItemResponse = (item: Record<string, unknown>) => ({
   id: item.id,
   title: item.title,
   description: item.description,
@@ -29,13 +50,62 @@ const toItemResponse = (item: Record<string, unknown>) => ({
   dateFound: item.dateFound,
   imageUrl: item.imageUrl,
   verificationQuestion: item.verificationQuestion,
-  verificationAnswer: item.verificationAnswer,
   hiddenDetails: item.hiddenDetails,
   status: item.status,
   postedBy: item.postedBy,
   createdAt: item.createdAt,
   updatedAt: item.updatedAt,
 });
+
+const toAdminItemResponse = (item: Record<string, unknown>) => ({
+  ...toPublicItemResponse(item),
+  verificationAnswer: item.verificationAnswer,
+});
+
+const getAuth = (req: Request) => (req as AuthedRequest).auth;
+
+const isAdmin = (req: Request) => getAuth(req)?.role === "admin";
+
+const normalizeParamValue = (value: string | string[] | undefined) => {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+};
+
+const assertItemOwnerOrAdmin = async (
+  req: Request,
+  itemId: string | string[] | undefined,
+) => {
+  const normalizedItemId = normalizeParamValue(itemId);
+  const auth = getAuth(req);
+
+  if (!auth) {
+    return { status: 401, message: "Authentication required" } as const;
+  }
+
+  if (!normalizedItemId) {
+    return { status: 400, message: "Item ID is required" } as const;
+  }
+
+  const result = await pool.query(
+    "SELECT posted_by FROM items WHERE id = $1",
+    [normalizedItemId],
+  );
+
+  if (result.rows.length === 0) {
+    return { status: 404, message: "Item not found" } as const;
+  }
+
+  const postedBy = result.rows[0].posted_by as number;
+
+  if (auth.role === "admin" || Number(postedBy) === Number(auth.id)) {
+    return { status: 200, postedBy } as const;
+  }
+
+  return { status: 403, message: "You do not have permission to perform this action" } as const;
+};
 
 export const createItem = async (req: Request, res: Response) => {
   const {
@@ -49,21 +119,26 @@ export const createItem = async (req: Request, res: Response) => {
     verificationAnswer,
     hiddenDetails = null,
     status = "available",
-    postedBy,
   } = req.body;
+  const auth = getAuth(req);
 
   try {
+    if (!auth) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
     if (
       !title ||
       !description ||
       !location ||
       !dateFound ||
       !verificationQuestion ||
-      !verificationAnswer ||
-      !postedBy
+      !verificationAnswer
     ) {
       return res.status(400).json({ message: "Missing required item fields" });
     }
+
+    const postedBy = auth.id;
 
     if (!allowedStatuses.has(status)) {
       return res.status(400).json({ message: "Invalid item status" });
@@ -83,7 +158,7 @@ export const createItem = async (req: Request, res: Response) => {
         status,
         posted_by
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING ${itemSelect}`,
+      RETURNING ${itemSelectAdmin}`,
       [
         title,
         description,
@@ -101,7 +176,7 @@ export const createItem = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       message: "Item created successfully",
-      item: toItemResponse(createdItem.rows[0]),
+      item: toPublicItemResponse(createdItem.rows[0]),
     });
   } catch (error) {
     console.error("Error creating item:", error);
@@ -117,11 +192,11 @@ export const createItem = async (req: Request, res: Response) => {
 export const getItems = async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT ${itemSelect} FROM items ORDER BY id DESC`,
+      `SELECT ${itemSelectPublic} FROM items ORDER BY id DESC`,
     );
 
     return res.status(200).json({
-      items: result.rows.map(toItemResponse),
+      items: result.rows.map(toPublicItemResponse),
     });
   } catch (error) {
     console.error("Error fetching items:", error);
@@ -131,10 +206,15 @@ export const getItems = async (_req: Request, res: Response) => {
 
 export const getItemById = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const auth = getAuth(req);
 
   try {
+    if (!auth) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
     const result = await pool.query(
-      `SELECT ${itemSelect} FROM items WHERE id = $1`,
+      `SELECT ${itemSelectAdmin} FROM items WHERE id = $1`,
       [id],
     );
 
@@ -142,7 +222,11 @@ export const getItemById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    return res.status(200).json({ item: toItemResponse(result.rows[0]) });
+    return res.status(200).json({
+      item: isAdmin(req)
+        ? toAdminItemResponse(result.rows[0])
+        : toPublicItemResponse(result.rows[0]),
+    });
   } catch (error) {
     console.error("Error fetching item:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -164,10 +248,25 @@ export const updateItem = async (req: Request, res: Response) => {
     status,
     postedBy,
   } = req.body;
+  const auth = getAuth(req);
 
   try {
+    if (!auth) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    if (!id) {
+      return res.status(400).json({ message: "Item ID is required" });
+    }
+
     if (status !== undefined && !allowedStatuses.has(status)) {
       return res.status(400).json({ message: "Invalid item status" });
+    }
+
+    const ownershipCheck = await assertItemOwnerOrAdmin(req, id);
+
+    if (ownershipCheck.status !== 200) {
+      return res.status(ownershipCheck.status).json({ message: ownershipCheck.message });
     }
 
     const updateFragments: string[] = [];
@@ -224,6 +323,10 @@ export const updateItem = async (req: Request, res: Response) => {
     }
 
     if (postedBy !== undefined) {
+      if (auth.role !== "admin" && Number(postedBy) !== Number(auth.id)) {
+        return res.status(403).json({ message: "You can only update your own item" });
+      }
+
       updateFragments.push(`posted_by = $${values.length + 1}`);
       values.push(postedBy);
     }
@@ -240,7 +343,7 @@ export const updateItem = async (req: Request, res: Response) => {
       `UPDATE items
        SET ${updateFragments.join(", ")}
        WHERE id = $${values.length}
-       RETURNING ${itemSelect}`,
+       RETURNING ${itemSelectAdmin}`,
       values,
     );
 
@@ -250,7 +353,9 @@ export const updateItem = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Item updated successfully",
-      item: toItemResponse(result.rows[0]),
+      item: isAdmin(req)
+        ? toAdminItemResponse(result.rows[0])
+        : toPublicItemResponse(result.rows[0]),
     });
   } catch (error) {
     console.error("Error updating item:", error);
@@ -273,8 +378,23 @@ export const updateItem = async (req: Request, res: Response) => {
 
 export const deleteItem = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const auth = getAuth(req);
 
   try {
+    if (!auth) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    if (!id) {
+      return res.status(400).json({ message: "Item ID is required" });
+    }
+
+    const ownershipCheck = await assertItemOwnerOrAdmin(req, id);
+
+    if (ownershipCheck.status !== 200) {
+      return res.status(ownershipCheck.status).json({ message: ownershipCheck.message });
+    }
+
     const result = await pool.query(
       "DELETE FROM items WHERE id = $1 RETURNING id",
       [id],
@@ -287,6 +407,21 @@ export const deleteItem = async (req: Request, res: Response) => {
     return res.status(200).json({ message: "Item deleted successfully" });
   } catch (error) {
     console.error("Error deleting item:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAdminItems = async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT ${itemSelectAdmin} FROM items ORDER BY id DESC`,
+    );
+
+    return res.status(200).json({
+      items: result.rows.map(toAdminItemResponse),
+    });
+  } catch (error) {
+    console.error("Error fetching admin items:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
