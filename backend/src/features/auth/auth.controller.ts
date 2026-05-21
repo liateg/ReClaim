@@ -23,12 +23,10 @@ export const registerUser = async (req: Request, res: Response) => {
   const { fullName, email, password } = req.body;
 
   try {
-    // 1. Validate input
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // 2. Check if user exists
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE email = $1",
       [email]
@@ -38,24 +36,24 @@ export const registerUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Insert user
-    const newUser = await pool.query(
-      `INSERT INTO users (full_name, email, password, role)
+ 
+    const result = await pool.query(
+      `INSERT INTO users (full_name, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, full_name, email`,
+       RETURNING id, full_name, email,role`,
       [fullName, email, hashedPassword, "user"]
     );
 
-    const user = newUser.rows[0];
+    const user = result.rows[0];
+     if (!user) {
+      return res.status(500).json({ message: "Failed to create user" });
+    }
 
-    // 5. Generate tokens (FIXED TYPO HERE)
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user.id);
 
-    // 6. Set refresh token cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -63,11 +61,15 @@ export const registerUser = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/auth/refresh",
     });
-const User={id:user.rows[0].id,full_name:user.rows[0].full_name,email:user.rows[0].email}
-    // 7. Return response
+
     return res.status(201).json({
       message: "User registered successfully",
-      user:User,
+      user:{
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      },
       accessToken,
     });
 
@@ -185,7 +187,7 @@ export const logInUser = async (req: Request, res: Response) => {
 
   
     const user = await pool.query(
-      "SELECT id, full_name, email, password, role FROM users WHERE email = $1",
+      "SELECT id, full_name, email, password_hash, role FROM users WHERE email = $1",
       [email]
     );
 
@@ -196,7 +198,7 @@ export const logInUser = async (req: Request, res: Response) => {
     const dbUser = user.rows[0];
 
     
-    const validPassword = await bcrypt.compare(password, dbUser.password);
+    const validPassword = await bcrypt.compare(password, dbUser.password_hash);
 
     if (!validPassword) {
       return res.status(400).json({ message: "Invalid email or password" });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'utils/router/app_router.dart';
 import 'utils/theme/app_theme.dart';
 import 'package:frontend/core/session/app_session.dart';
@@ -6,7 +7,7 @@ import 'package:frontend/core/session/app_session.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSession.load();
-  runApp(const ReClaimApp());
+  runApp(const ProviderScope(child: ReClaimApp()));
 }
 
 class ReClaimApp extends StatelessWidget {

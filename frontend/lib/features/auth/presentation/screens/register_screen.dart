@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../utils/theme/app_theme.dart';
+import '../../riverpod/auth_provider.dart';
+import '../../../../utils/router/route_paths.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -24,9 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _confirmPasswordError;
   String? _generalError;
 
-  bool _isLoading = false;
-
-  void _validateAndSubmit() {
+  void _handleRegister() async {
     setState(() {
       _generalError = null;
       _nameError = null;
@@ -85,25 +86,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    try {
+      await ref.read(registerProvider({
+        'fullName': _nameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      }).future);
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        // Show success message
+      final isLoggedIn = await ref.read(authProvider.future);
+
+      if (isLoggedIn) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Account created successfully!'),
-            backgroundColor: AppTheme.primaryGreenLight,
+            backgroundColor: Colors.green,
           ),
         );
-        context.pushReplacement('/login');
+        context.go(RoutePaths.home);
+      } else {
+        setState(() {
+          _generalError = 'Registration failed. Please try again.';
+        });
       }
-    });
+    } catch (e) {
+      print('8. Error caught: $e');
+      setState(() {
+        _generalError = 'Registration failed: ${e.toString()}';
+      });
+    }
   }
 
   bool _isValidEmail(String email) {
@@ -122,6 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
@@ -211,11 +222,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 errorText: _confirmPasswordError,
               ),
               const SizedBox(height: 24),
-              CustomButton(
-                text: 'Create Account',
-                onPressed: _validateAndSubmit,
-                isLoading: _isLoading,
-              ),
+              authState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : CustomButton(
+                      text: 'Create Account',
+                      onPressed: _handleRegister,
+                      isLoading: false,
+                    ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

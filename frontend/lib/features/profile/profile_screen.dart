@@ -1,39 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/session/app_session.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/utils/router/route_paths.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
+import 'package:frontend/features/auth/riverpod/auth_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  void _goBack(BuildContext context) {
+  void _goBack(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.read(isAdminProvider);
     if (context.canPop()) {
       context.pop();
     } else {
       context.go(
-        AppSession.isAdmin ? RoutePaths.adminDashboard : RoutePaths.home,
+        isAdmin ? RoutePaths.adminDashboard : RoutePaths.home,
       );
     }
   }
 
-  Future<void> _confirmSignOut(BuildContext context) async {
+  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black54,
       builder: (ctx) => const _SignOutConfirmDialog(),
     );
     if (ok == true && context.mounted) {
-      AppSession.signOut();
+      await ref.read(logoutProvider.future);
       context.go(RoutePaths.login);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final isAdmin = AppSession.isAdmin;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.read(isAdminProvider);
+    final displayName = ref.read(userNameProvider);
+    final email = ref.read(userEmailProvider);
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: CustomAppBar(
@@ -42,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
         showProfileAction: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => _goBack(context),
+          onPressed: () => _goBack(context, ref),
         ),
       ),
       body: ListView(
@@ -50,13 +55,11 @@ class ProfileScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           _AvatarBlock(
-            initials: _initials(AppSession.displayName),
+            initials: _initials(displayName),
           ),
           const SizedBox(height: 16),
           Text(
-            AppSession.displayName.isEmpty
-                ? 'Guest'
-                : AppSession.displayName,
+            displayName.isEmpty ? 'Guest' : displayName,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 22,
@@ -66,7 +69,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            AppSession.email.isEmpty ? '—' : AppSession.email,
+            email.isEmpty ? '—' : email,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
@@ -85,8 +88,8 @@ class ProfileScreen extends StatelessWidget {
             _sectionLabel('ADMINISTRATION & SECURITY'),
             const SizedBox(height: 10),
             _AdminSignOutTile(
-              emailHint: AppSession.email,
-              onTap: () => _confirmSignOut(context),
+              emailHint: email,
+              onTap: () => _confirmSignOut(context, ref),
             ),
           ] else ...[
             const SizedBox(height: 8),
@@ -117,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _UserLogoutButton(
-              onPressed: () => _confirmSignOut(context),
+              onPressed: () => _confirmSignOut(context, ref),
             ),
           ],
         ],
@@ -360,7 +363,8 @@ class _AdminSignOutTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final short = emailHint.isEmpty ? 'this account' : emailHint.split('@').first;
+    final short =
+        emailHint.isEmpty ? 'this account' : emailHint.split('@').first;
     return Material(
       color: AppTheme.white,
       borderRadius: BorderRadius.circular(16),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:frontend/core/session/app_session.dart';
 import 'package:frontend/shared/widgets/custom_text_field.dart';
 import 'package:frontend/shared/widgets/custom_button.dart';
 import '../../../../utils/router/route_paths.dart';
@@ -22,8 +21,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   String? _generalError;
-
-  bool _isLoading = false;
 
   void _handleSignIn() async {
     setState(() {
@@ -52,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    final result = await ref.read(loginProvider({
+    await ref.read(loginProvider({
       'email': _emailController.text,
       'password': _passwordController.text,
     }).future);

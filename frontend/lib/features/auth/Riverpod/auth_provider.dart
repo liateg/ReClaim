@@ -28,8 +28,12 @@ final loginProvider =
 final registerProvider =
     FutureProvider.family<void, Map<String, String>>((ref, data) async {
   final service = ref.read(authServiceProvider);
-  final response = await service.register(
-      data['fullName']!, data['email']!, data['password']!);
+
+  final fullName = data['fullName']!;
+  final email = data['email']!;
+  final password = data['password']!;
+
+  final response = await service.register(fullName, email, password);
 
   AppSession.signIn(
     role: AppUserRole.user,
@@ -46,6 +50,7 @@ final logoutProvider = FutureProvider<void>((ref) async {
   await service.logout();
   await AppSession.signOut();
   ref.invalidate(authProvider);
+  print('Provider logout successful ');
 });
 
 final isAdminProvider = Provider<bool>((ref) => AppSession.isAdmin);

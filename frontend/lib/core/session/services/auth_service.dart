@@ -44,7 +44,12 @@ class AuthService {
 
       return response.data;
     } catch (e) {
-      throw Exception('Registration failed');
+      print('Register error: $e');
+      if (e is DioException) {
+        print('Dio error response: ${e.response?.data}');
+        print('Dio error status: ${e.response?.statusCode}');
+      }
+      rethrow;
     }
   }
 
