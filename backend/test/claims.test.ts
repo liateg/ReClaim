@@ -126,7 +126,9 @@ describe("Claims API", () => {
       res.body.claims.some((claim: { id: number }) => claim.id === claimId),
     ).to.equal(true);
     expect(
-      res.body.claims.some((claim: { id: number }) => claim.id === rejectedClaimId),
+      res.body.claims.some(
+        (claim: { id: number }) => claim.id === rejectedClaimId,
+      ),
     ).to.equal(false);
   });
 
@@ -141,7 +143,9 @@ describe("Claims API", () => {
       res.body.claims.some((claim: { id: number }) => claim.id === claimId),
     ).to.equal(true);
     expect(
-      res.body.claims.some((claim: { id: number }) => claim.id === rejectedClaimId),
+      res.body.claims.some(
+        (claim: { id: number }) => claim.id === rejectedClaimId,
+      ),
     ).to.equal(true);
   });
 
@@ -220,8 +224,12 @@ describe("Claims API", () => {
   });
 
   after(async () => {
-    await api.delete(`/claims/${rejectedClaimId}`).set("Authorization", `Bearer ${adminToken}`);
-    await api.delete(`/items/${itemId}`).set("Authorization", `Bearer ${ownerToken}`);
+    await api
+      .delete(`/claims/${rejectedClaimId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    await api
+      .delete(`/items/${itemId}`)
+      .set("Authorization", `Bearer ${ownerToken}`);
     await api.delete(`/users/${claimantId}`);
     await api.delete(`/users/${ownerId}`);
     await api.delete(`/users/${adminId}`);

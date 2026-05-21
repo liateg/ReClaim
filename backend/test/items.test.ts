@@ -61,15 +61,18 @@ describe("Items API", () => {
   });
 
   it("creates an item", async () => {
-    const res = await api.post("/items").set("Authorization", `Bearer ${ownerToken}`).send({
-      title: `Lost Wallet ${uniqueId}`,
-      description: "Black leather wallet",
-      location: "Main Hall",
-      dateFound: "2026-05-21",
-      verificationQuestion: "What is inside?",
-      verificationAnswer: "Two cards",
-      status: "available",
-    });
+    const res = await api
+      .post("/items")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        title: `Lost Wallet ${uniqueId}`,
+        description: "Black leather wallet",
+        location: "Main Hall",
+        dateFound: "2026-05-21",
+        verificationQuestion: "What is inside?",
+        verificationAnswer: "Two cards",
+        status: "available",
+      });
 
     expect(res.status).to.equal(201);
     expect(res.body.item).to.include({
@@ -80,7 +83,9 @@ describe("Items API", () => {
   });
 
   it("lists items", async () => {
-    const res = await api.get("/items").set("Authorization", `Bearer ${ownerToken}`);
+    const res = await api
+      .get("/items")
+      .set("Authorization", `Bearer ${ownerToken}`);
 
     expect(res.status).to.equal(200);
     expect(res.body.items).to.be.an("array");
@@ -91,7 +96,9 @@ describe("Items API", () => {
   });
 
   it("gets an item by id", async () => {
-    const res = await api.get(`/items/${itemId}`).set("Authorization", `Bearer ${ownerToken}`);
+    const res = await api
+      .get(`/items/${itemId}`)
+      .set("Authorization", `Bearer ${ownerToken}`);
 
     expect(res.status).to.equal(200);
     expect(res.body.item).to.include({ id: itemId, postedBy: ownerId });
@@ -108,15 +115,18 @@ describe("Items API", () => {
   });
 
   it("updates an item", async () => {
-    const res = await api.put(`/items/${itemId}`).set("Authorization", `Bearer ${ownerToken}`).send({
-      title: `Found Wallet ${uniqueId}`,
-      status: "claimed",
-      description: "Black leather wallet with updated note",
-      location: "Reception",
-      dateFound: "2026-05-22",
-      verificationQuestion: "What color is the wallet?",
-      verificationAnswer: "Black",
-    });
+    const res = await api
+      .put(`/items/${itemId}`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        title: `Found Wallet ${uniqueId}`,
+        status: "claimed",
+        description: "Black leather wallet with updated note",
+        location: "Reception",
+        dateFound: "2026-05-22",
+        verificationQuestion: "What color is the wallet?",
+        verificationAnswer: "Black",
+      });
 
     expect(res.status).to.equal(200);
     expect(res.body.item).to.include({
@@ -127,22 +137,29 @@ describe("Items API", () => {
   });
 
   it("blocks another user from updating the item", async () => {
-    const res = await api.put(`/items/${itemId}`).set("Authorization", `Bearer ${otherToken}`).send({
-      title: "Should fail",
-    });
+    const res = await api
+      .put(`/items/${itemId}`)
+      .set("Authorization", `Bearer ${otherToken}`)
+      .send({
+        title: "Should fail",
+      });
 
     expect(res.status).to.equal(403);
   });
 
   it("lets admin view the full item list", async () => {
-    const res = await api.get("/items/admin").set("Authorization", `Bearer ${adminToken}`);
+    const res = await api
+      .get("/items/admin")
+      .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).to.equal(200);
     expect(res.body.items[0]).to.have.property("verificationAnswer");
   });
 
   it("deletes an item", async () => {
-    const res = await api.delete(`/items/${itemId}`).set("Authorization", `Bearer ${ownerToken}`);
+    const res = await api
+      .delete(`/items/${itemId}`)
+      .set("Authorization", `Bearer ${ownerToken}`);
 
     expect(res.status).to.equal(200);
     expect(res.body.message).to.equal("Item deleted successfully");

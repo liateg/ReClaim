@@ -89,10 +89,9 @@ const assertItemOwnerOrAdmin = async (
     return { status: 400, message: "Item ID is required" } as const;
   }
 
-  const result = await pool.query(
-    "SELECT posted_by FROM items WHERE id = $1",
-    [normalizedItemId],
-  );
+  const result = await pool.query("SELECT posted_by FROM items WHERE id = $1", [
+    normalizedItemId,
+  ]);
 
   if (result.rows.length === 0) {
     return { status: 404, message: "Item not found" } as const;
@@ -104,7 +103,10 @@ const assertItemOwnerOrAdmin = async (
     return { status: 200, postedBy } as const;
   }
 
-  return { status: 403, message: "You do not have permission to perform this action" } as const;
+  return {
+    status: 403,
+    message: "You do not have permission to perform this action",
+  } as const;
 };
 
 export const createItem = async (req: Request, res: Response) => {
@@ -266,7 +268,9 @@ export const updateItem = async (req: Request, res: Response) => {
     const ownershipCheck = await assertItemOwnerOrAdmin(req, id);
 
     if (ownershipCheck.status !== 200) {
-      return res.status(ownershipCheck.status).json({ message: ownershipCheck.message });
+      return res
+        .status(ownershipCheck.status)
+        .json({ message: ownershipCheck.message });
     }
 
     const updateFragments: string[] = [];
@@ -324,7 +328,9 @@ export const updateItem = async (req: Request, res: Response) => {
 
     if (postedBy !== undefined) {
       if (auth.role !== "admin" && Number(postedBy) !== Number(auth.id)) {
-        return res.status(403).json({ message: "You can only update your own item" });
+        return res
+          .status(403)
+          .json({ message: "You can only update your own item" });
       }
 
       updateFragments.push(`posted_by = $${values.length + 1}`);
@@ -392,7 +398,9 @@ export const deleteItem = async (req: Request, res: Response) => {
     const ownershipCheck = await assertItemOwnerOrAdmin(req, id);
 
     if (ownershipCheck.status !== 200) {
-      return res.status(ownershipCheck.status).json({ message: ownershipCheck.message });
+      return res
+        .status(ownershipCheck.status)
+        .json({ message: ownershipCheck.message });
     }
 
     const result = await pool.query(

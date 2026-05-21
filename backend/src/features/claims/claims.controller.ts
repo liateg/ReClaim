@@ -210,7 +210,11 @@ export const updateClaim = async (req: Request, res: Response) => {
     }
 
     if (!isAdmin) {
-      if (itemId !== undefined || claimantId !== undefined || reviewNote !== undefined) {
+      if (
+        itemId !== undefined ||
+        claimantId !== undefined ||
+        reviewNote !== undefined
+      ) {
         return res.status(403).json({
           message: "You can only update your own claim details",
         });
@@ -340,7 +344,9 @@ export const approveClaim = async (req: Request, res: Response) => {
     );
 
     return res.status(200).json({
-      message: matched ? "Claim approved successfully" : "Claim rejected successfully",
+      message: matched
+        ? "Claim approved successfully"
+        : "Claim rejected successfully",
       claim: toClaimResponse(result.rows[0]),
     });
   } catch (error) {
@@ -364,7 +370,10 @@ export const deleteClaim = async (req: Request, res: Response) => {
       return res.status(access.status).json({ message: access.message });
     }
 
-    if (auth.role !== "admin" && Number(access.claimantId) !== Number(auth.id)) {
+    if (
+      auth.role !== "admin" &&
+      Number(access.claimantId) !== Number(auth.id)
+    ) {
       return res
         .status(403)
         .json({ message: "You do not have permission to perform this action" });

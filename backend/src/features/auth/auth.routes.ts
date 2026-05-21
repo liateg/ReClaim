@@ -1,11 +1,11 @@
 import { Router } from "express";
 import {
-	getCurrentUser,
-	getUserById,
-	logInUser,
-	refreshToken,
-	registerUser,
-	updateUser,
+  getCurrentUser,
+  getUserById,
+  logInUser,
+  refreshToken,
+  registerUser,
+  updateUser,
 } from "./auth.controller.js";
 import { authenticateToken } from "../../middleware/authentication.middleware.js";
 
