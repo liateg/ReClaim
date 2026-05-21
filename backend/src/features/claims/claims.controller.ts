@@ -185,6 +185,34 @@ export const updateClaim = async (req: Request, res: Response) => {
   }
 };
 
+export const approveClaim = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { reviewNote } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE claims
+       SET status = 'approved',
+           review_note = COALESCE($1, review_note)
+       WHERE id = $2
+       RETURNING ${claimSelect}`,
+      [reviewNote ?? null, Number(id)],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Claim not found" });
+    }
+
+    return res.status(200).json({
+      message: "Claim approved successfully",
+      claim: toClaimResponse(result.rows[0]),
+    });
+  } catch (error) {
+    console.error("Error approving claim:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const deleteClaim = async (req: Request, res: Response) => {
   const { id } = req.params;
 

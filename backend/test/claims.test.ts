@@ -13,8 +13,10 @@ describe("Claims API", () => {
 
   let ownerId: number;
   let claimantId: number;
+  let adminId: number;
   let itemId: number;
   let claimId: number;
+  let adminAccessToken: string;
 
   before(async () => {
     const ownerRes = await api.post("/users").send({
@@ -32,6 +34,26 @@ describe("Claims API", () => {
     });
 
     claimantId = claimantRes.body.user.id;
+
+    const adminEmail = `claim-admin-${uniqueId}@example.com`;
+
+    const adminRes = await api.post("/users").send({
+      fullName: "Claim Admin",
+      email: adminEmail,
+      password: "MyTestPass!23",
+      role: "admin",
+    });
+
+    expect(adminRes.status).to.equal(201);
+    adminId = adminRes.body.user.id;
+
+    const loginRes = await api.post("/auth/login").send({
+      email: adminEmail,
+      password: "MyTestPass!23",
+    });
+
+    expect(loginRes.status).to.equal(200);
+    adminAccessToken = loginRes.body.accessToken;
 
     const itemRes = await api.post("/items").send({
       title: `Claim Item ${uniqueId}`,
@@ -83,8 +105,8 @@ describe("Claims API", () => {
 
   it("updates a claim", async () => {
     const res = await api.put(`/claims/${claimId}`).send({
-      status: "approved",
-      reviewNote: "Verified by admin",
+      status: "withdrawn",
+      reviewNote: "Needs admin review",
       answerAttempt: "Blue tag",
       itemId,
       claimantId,
@@ -93,8 +115,24 @@ describe("Claims API", () => {
     expect(res.status).to.equal(200);
     expect(res.body.claim).to.include({
       id: claimId,
+      status: "withdrawn",
+      reviewNote: "Needs admin review",
+    });
+  });
+
+  it("approves a claim as admin", async () => {
+    const res = await api
+      .patch(`/claims/${claimId}/approve`)
+      .set("Authorization", `Bearer ${adminAccessToken}`)
+      .send({
+        reviewNote: "Verified and approved",
+      });
+
+    expect(res.status).to.equal(200);
+    expect(res.body.claim).to.include({
+      id: claimId,
       status: "approved",
-      reviewNote: "Verified by admin",
+      reviewNote: "Verified and approved",
     });
   });
 
@@ -109,5 +147,6 @@ describe("Claims API", () => {
     await api.delete(`/items/${itemId}`);
     await api.delete(`/users/${claimantId}`);
     await api.delete(`/users/${ownerId}`);
+    await api.delete(`/users/${adminId}`);
   });
 });
