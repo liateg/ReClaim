@@ -56,8 +56,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final isLoggedIn = await ref.read(authProvider.future);
 
+    final isAdmin = ref.read(isAdminProvider);
+
     if (isLoggedIn) {
-      final isAdmin = ref.read(isAdminProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
