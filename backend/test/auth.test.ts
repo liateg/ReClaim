@@ -7,7 +7,8 @@ import App from '../src/app.js';
 
 describe('Auth API', () => {
   const agent = request.agent(App);
-  const testEmail = 'test-user2@example.com';
+  const uniqueId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const testEmail = `test-user-${uniqueId}@example.com`;
   const testPassword = 'MyTestPass!23';
 
   before(async () => {
