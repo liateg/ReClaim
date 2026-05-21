@@ -1,7 +1,14 @@
 import dotenv from "dotenv";
-dotenv.config();
-import { pool } from "../src/config/db.js";
+import pg from "pg";
 import bcrypt from "bcrypt";
+dotenv.config();
+const pool = new pg.Pool({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT),
+    password: process.env.DB_PASSWORD,
+});
 async function seed() {
     try {
         await pool.query("DELETE FROM users WHERE email LIKE $1", ["test-%"]);

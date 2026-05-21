@@ -9,9 +9,10 @@
   "scripts": {
     "test:seed": "node --loader ts-node/esm ./test/seed.ts",
     "test": "npm run test:seed && node --loader ts-node/esm ./node_modules/mocha/bin/mocha \"test/**/*.test.ts\" --exit --timeout 10000",
-   "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "db:apply": "node --loader ts-node/esm ./scripts/apply-schema.ts"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +20,7 @@
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/chai": "^4.3.4",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
