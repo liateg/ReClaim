@@ -56,7 +56,11 @@ describe("Claims API", () => {
     });
 
     expect(res.status).to.equal(201);
-    expect(res.body.claim).to.include({ itemId, claimantId, status: "pending" });
+    expect(res.body.claim).to.include({
+      itemId,
+      claimantId,
+      status: "pending",
+    });
     claimId = res.body.claim.id;
   });
 
@@ -65,7 +69,9 @@ describe("Claims API", () => {
 
     expect(res.status).to.equal(200);
     expect(res.body.claims).to.be.an("array");
-    expect(res.body.claims.some((claim: { id: number }) => claim.id === claimId)).to.equal(true);
+    expect(
+      res.body.claims.some((claim: { id: number }) => claim.id === claimId),
+    ).to.equal(true);
   });
 
   it("gets a claim by id", async () => {
@@ -85,7 +91,11 @@ describe("Claims API", () => {
     });
 
     expect(res.status).to.equal(200);
-    expect(res.body.claim).to.include({ id: claimId, status: "approved", reviewNote: "Verified by admin" });
+    expect(res.body.claim).to.include({
+      id: claimId,
+      status: "approved",
+      reviewNote: "Verified by admin",
+    });
   });
 
   it("deletes a claim", async () => {

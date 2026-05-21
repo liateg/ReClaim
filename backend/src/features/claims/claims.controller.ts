@@ -1,7 +1,12 @@
 import { type Request, type Response } from "express";
 import { pool } from "../../config/db.js";
 
-const allowedStatuses = new Set(["pending", "approved", "rejected", "withdrawn"]);
+const allowedStatuses = new Set([
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+]);
 
 const claimSelect = `
   id,
@@ -67,7 +72,9 @@ export const createClaim = async (req: Request, res: Response) => {
 
 export const getClaims = async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query(`SELECT ${claimSelect} FROM claims ORDER BY id DESC`);
+    const result = await pool.query(
+      `SELECT ${claimSelect} FROM claims ORDER BY id DESC`,
+    );
 
     return res.status(200).json({
       claims: result.rows.map(toClaimResponse),
@@ -82,7 +89,10 @@ export const getClaimById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`SELECT ${claimSelect} FROM claims WHERE id = $1`, [id]);
+    const result = await pool.query(
+      `SELECT ${claimSelect} FROM claims WHERE id = $1`,
+      [id],
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Claim not found" });
@@ -133,7 +143,9 @@ export const updateClaim = async (req: Request, res: Response) => {
     }
 
     if (updateFragments.length === 0) {
-      return res.status(400).json({ message: "At least one field is required to update" });
+      return res
+        .status(400)
+        .json({ message: "At least one field is required to update" });
     }
 
     values.push(Number(id));
@@ -161,8 +173,12 @@ export const updateClaim = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid foreign key reference" });
     }
 
-    if ((error as Error).message === "At least one field is required to update") {
-      return res.status(400).json({ message: "At least one field is required to update" });
+    if (
+      (error as Error).message === "At least one field is required to update"
+    ) {
+      return res
+        .status(400)
+        .json({ message: "At least one field is required to update" });
     }
 
     return res.status(500).json({ message: "Internal server error" });
@@ -173,7 +189,10 @@ export const deleteClaim = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query("DELETE FROM claims WHERE id = $1 RETURNING id", [id]);
+    const result = await pool.query(
+      "DELETE FROM claims WHERE id = $1 RETURNING id",
+      [id],
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Claim not found" });

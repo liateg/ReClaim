@@ -36,7 +36,11 @@ describe("Items API", () => {
     });
 
     expect(res.status).to.equal(201);
-    expect(res.body.item).to.include({ title: `Lost Wallet ${uniqueId}`, status: "available", postedBy: ownerId });
+    expect(res.body.item).to.include({
+      title: `Lost Wallet ${uniqueId}`,
+      status: "available",
+      postedBy: ownerId,
+    });
     itemId = res.body.item.id;
   });
 
@@ -45,7 +49,9 @@ describe("Items API", () => {
 
     expect(res.status).to.equal(200);
     expect(res.body.items).to.be.an("array");
-    expect(res.body.items.some((item: { id: number }) => item.id === itemId)).to.equal(true);
+    expect(
+      res.body.items.some((item: { id: number }) => item.id === itemId),
+    ).to.equal(true);
   });
 
   it("gets an item by id", async () => {
@@ -68,7 +74,11 @@ describe("Items API", () => {
     });
 
     expect(res.status).to.equal(200);
-    expect(res.body.item).to.include({ id: itemId, title: `Found Wallet ${uniqueId}`, status: "claimed" });
+    expect(res.body.item).to.include({
+      id: itemId,
+      title: `Found Wallet ${uniqueId}`,
+      status: "claimed",
+    });
   });
 
   it("deletes an item", async () => {

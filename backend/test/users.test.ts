@@ -31,7 +31,9 @@ describe("Users API", () => {
 
     expect(res.status).to.equal(200);
     expect(res.body.users).to.be.an("array");
-    expect(res.body.users.some((user: { id: number }) => user.id === userId)).to.equal(true);
+    expect(
+      res.body.users.some((user: { id: number }) => user.id === userId),
+    ).to.equal(true);
   });
 
   it("gets a user by id", async () => {
@@ -48,7 +50,11 @@ describe("Users API", () => {
     });
 
     expect(res.status).to.equal(200);
-    expect(res.body.user).to.include({ id: userId, email: updatedEmail, fullName: "Users Test Updated" });
+    expect(res.body.user).to.include({
+      id: userId,
+      email: updatedEmail,
+      fullName: "Users Test Updated",
+    });
   });
 
   it("deletes a user", async () => {

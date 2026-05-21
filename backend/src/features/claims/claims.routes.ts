@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { createClaim, deleteClaim, getClaimById, getClaims, updateClaim } from "./claims.controller.js";
+import {
+  createClaim,
+  deleteClaim,
+  getClaimById,
+  getClaims,
+  updateClaim,
+} from "./claims.controller.js";
 
 const router = Router();
 

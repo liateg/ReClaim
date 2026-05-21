@@ -4,7 +4,8 @@ import { pool } from "../../config/db.js";
 
 const allowedRoles = new Set(["user", "admin"]);
 
-const normalizeBodyValue = (value: unknown) => (Array.isArray(value) ? value[0] : value);
+const normalizeBodyValue = (value: unknown) =>
+  Array.isArray(value) ? value[0] : value;
 
 const isAllowedRole = (value: unknown): value is "user" | "admin" => {
   return typeof value === "string" && allowedRoles.has(value);
@@ -32,14 +33,19 @@ export const createUser = async (req: Request, res: Response) => {
 
   try {
     if (!fullName || !email || !password) {
-      return res.status(400).json({ message: "Full name, email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Full name, email and password are required" });
     }
 
     if (!isAllowedRole(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    const existingUser = await pool.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email],
+    );
 
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ message: "User already exists" });
@@ -71,7 +77,9 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const getUsers = async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query(`SELECT ${userSelect} FROM users ORDER BY id DESC`);
+    const result = await pool.query(
+      `SELECT ${userSelect} FROM users ORDER BY id DESC`,
+    );
 
     return res.status(200).json({
       users: result.rows.map(toUserResponse),
@@ -90,7 +98,10 @@ export const getUserById = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    const result = await pool.query(`SELECT ${userSelect} FROM users WHERE id = $1`, [id]);
+    const result = await pool.query(
+      `SELECT ${userSelect} FROM users WHERE id = $1`,
+      [id],
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
@@ -141,7 +152,9 @@ export const updateUser = async (req: Request, res: Response) => {
     }
 
     if (updateFragments.length === 0) {
-      return res.status(400).json({ message: "At least one field is required to update" });
+      return res
+        .status(400)
+        .json({ message: "At least one field is required to update" });
     }
 
     values.push(Number(id));
@@ -169,8 +182,12 @@ export const updateUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    if ((error as Error).message === "At least one field is required to update") {
-      return res.status(400).json({ message: "At least one field is required to update" });
+    if (
+      (error as Error).message === "At least one field is required to update"
+    ) {
+      return res
+        .status(400)
+        .json({ message: "At least one field is required to update" });
     }
 
     return res.status(500).json({ message: "Internal server error" });
@@ -185,7 +202,10 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    const result = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [id]);
+    const result = await pool.query(
+      "DELETE FROM users WHERE id = $1 RETURNING id",
+      [id],
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
