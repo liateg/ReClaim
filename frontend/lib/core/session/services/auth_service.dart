@@ -19,7 +19,6 @@ class AuthService {
         'password': password,
       });
 
-      // Save token
       final token = response.data['accessToken'];
       await _storage.write(key: 'token', value: token);
 
@@ -38,7 +37,6 @@ class AuthService {
         'password': password,
       });
 
-      // Save token
       final token = response.data['accessToken'];
       await _storage.write(key: 'token', value: token);
 
