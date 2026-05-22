@@ -3,16 +3,15 @@ import 'package:flutter/material.dart';
 class FeedbackSuccessScreen extends StatelessWidget {
   const FeedbackSuccessScreen({super.key});
 
-
-  static const Color kBg           = Color(0xFFFEF9F2);
-  static const Color kDarkGreen    = Color(0xFF003925);
-  static const Color kMidGreen     = Color(0xFF1D503A);
-  static const Color kTextBody     = Color(0xFF404943);
-  static const Color kRingOuter    = Color(0x4C9DD2B5); 
-  static const Color kCircleBg     = Color(0xFFF8F3EC);
+  static const Color kBg = Color(0xFFFEF9F2);
+  static const Color kDarkGreen = Color(0xFF003925);
+  static const Color kMidGreen = Color(0xFF1D503A);
+  static const Color kTextBody = Color(0xFF404943);
+  static const Color kRingOuter = Color(0x4C9DD2B5);
+  static const Color kCircleBg = Color(0xFFF8F3EC);
   static const Color kCircleBorder = Color(0x26C0C9C1);
-  static const Color kUnderline    = Color(0xFF9DD2B5);
-  static const Color kShadow       = Color(0x0F1D1C18);
+  static const Color kUnderline = Color(0xFF9DD2B5);
+  static const Color kShadow = Color(0x0F1D1C18);
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +27,8 @@ class FeedbackSuccessScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 80),
-
                   _buildCheckIllustration(),
-
                   const SizedBox(height: 32),
-
                   const Text(
                     'Feedback Submitted',
                     textAlign: TextAlign.center,
@@ -45,9 +41,7 @@ class FeedbackSuccessScreen extends StatelessWidget {
                       letterSpacing: -0.40,
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 320),
                     child: const Text(
@@ -62,30 +56,22 @@ class FeedbackSuccessScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
-    
                   _buildPrimaryButton(
                     label: 'Back to Claims',
                     onTap: () => Navigator.maybePop(context),
                   ),
-
                   const SizedBox(height: 16),
-
-                  
                   _buildSecondaryLink(
                     label: 'Return to Dashboard',
                     onTap: () {
-                     
                       Navigator.pushNamedAndRemoveUntil(
-                        context, 
-                        '/dashboard', 
+                        context,
+                        '/dashboard',
                         (route) => false,
                       );
                     },
                   ),
-
                   const SizedBox(height: 80),
                 ],
               ),
@@ -103,7 +89,6 @@ class FeedbackSuccessScreen extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-         
           Container(
             width: 192,
             height: 192,
@@ -112,8 +97,6 @@ class FeedbackSuccessScreen extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-
-
           Container(
             width: 128,
             height: 128,
@@ -150,7 +133,6 @@ class FeedbackSuccessScreen extends StatelessWidget {
     );
   }
 
- 
   Widget _buildPrimaryButton({
     required String label,
     required VoidCallback onTap,
@@ -195,7 +177,6 @@ class FeedbackSuccessScreen extends StatelessWidget {
     );
   }
 
-  
   Widget _buildSecondaryLink({
     required String label,
     required VoidCallback onTap,
