@@ -36,9 +36,11 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isAdmin = ref.read(isAdminProvider);
-    final displayName = ref.read(userNameProvider);
-    final email = ref.read(userEmailProvider);
+    ref.watch(authProvider);
+
+    final isAdmin = ref.watch(isAdminProvider);
+    final displayName = ref.watch(userNameProvider);
+    final email = ref.watch(userEmailProvider);
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: CustomAppBar(

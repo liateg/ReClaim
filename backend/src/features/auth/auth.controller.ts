@@ -100,6 +100,22 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
+export const logoutUser = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/auth/refresh",
+    });
+    
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Error logging out:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
