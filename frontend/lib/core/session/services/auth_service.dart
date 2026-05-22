@@ -52,7 +52,18 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: 'token');
+    try {
+      final token = await getToken();
+      if (token != null && token.isNotEmpty) {
+        await _dio.post('/auth/logout',
+            options: Options(headers: {'Authorization': 'Bearer $token'}));
+      }
+    } catch (e) {
+      print('Backend logout error: $e');
+      // Even if backend logout fails, still clear local
+    } finally {
+      await _storage.delete(key: 'token');
+    }
   }
 
   Future<String?> getToken() async {

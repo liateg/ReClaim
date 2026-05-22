@@ -15,9 +15,8 @@ final loginProvider =
 
   print('Login response: $response');
   print('User role from backend: ${response['user']['role']}');
-  print('Is admin? ${response['user']['role'] == 'admin'}');
 
-  AppSession.signIn(
+  await AppSession.signIn(
     role: response['user']['role'] == 'admin'
         ? AppUserRole.admin
         : AppUserRole.user,
@@ -27,6 +26,10 @@ final loginProvider =
 
   await AppSession.saveToken(response['accessToken']);
   ref.invalidate(authProvider);
+  ref.invalidate(isAdminProvider);
+  ref.invalidate(currentUserRoleProvider);
+  ref.invalidate(userNameProvider);
+  ref.invalidate(userEmailProvider);
   print('After sign in - AppSession.isAdmin: ${AppSession.isAdmin}');
 });
 
@@ -51,11 +54,23 @@ final registerProvider =
 });
 
 final logoutProvider = FutureProvider<void>((ref) async {
+  print('Logging out...');
   final service = ref.read(authServiceProvider);
+
+  // Call backend logout
   await service.logout();
+
+  // Clear local session
   await AppSession.signOut();
+
+  // Invalidate all auth providers
   ref.invalidate(authProvider);
-  print('Provider logout successful ');
+  ref.invalidate(isAdminProvider);
+  ref.invalidate(currentUserRoleProvider);
+  ref.invalidate(userNameProvider);
+  ref.invalidate(userEmailProvider);
+
+  print('Logout complete');
 });
 
 final isAdminProvider = Provider<bool>((ref) {
