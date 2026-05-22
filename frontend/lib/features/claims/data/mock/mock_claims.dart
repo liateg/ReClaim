@@ -1,4 +1,5 @@
 import '../model/claim_model.dart';
+import '../../data/claims_service.dart';
 
 final List<Claim> mockClaims = [
   Claim(
@@ -155,3 +156,26 @@ final List<Claim> mockClaims = [
     date: DateTime.now().subtract(const Duration(days: 6)),
   ),
 ];
+
+void addMockClaim(Claim claim) {
+  mockClaims.insert(0, claim);
+  ClaimsService().invalidateClaimsCache();
+}
+
+bool updateMockClaim(String id, Claim updated) {
+  final idx = mockClaims.indexWhere((c) => c.id == id);
+  if (idx == -1) return false;
+  mockClaims[idx] = updated;
+  ClaimsService().invalidateClaimsCache(id: id);
+  return true;
+}
+
+bool removeMockClaim(String id) {
+  final before = mockClaims.length;
+  mockClaims.removeWhere((c) => c.id == id);
+  if (mockClaims.length < before) {
+    ClaimsService().invalidateClaimsCache(id: id);
+    return true;
+  }
+  return false;
+}
