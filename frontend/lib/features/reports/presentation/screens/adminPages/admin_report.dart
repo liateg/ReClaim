@@ -143,7 +143,7 @@ class AdminReportsScreen extends ConsumerWidget {
   }
 }
 
-// Helper widgets (same as before but using Report model)
+
 class _TotalReportsCard extends StatelessWidget {
   final String value;
   const _TotalReportsCard({required this.value});
