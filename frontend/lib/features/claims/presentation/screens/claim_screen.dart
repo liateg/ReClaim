@@ -8,25 +8,10 @@ import '../../data/mock/mock_claims.dart';
 import 'claim_withdraw.dart';
 import 'claim_delete.dart';
 
-<<<<<<< HEAD
-class ClaimsScreen extends StatefulWidget {
-  const ClaimsScreen({super.key});
-
-  @override
-  State<ClaimsScreen> createState() => _ClaimsScreenState();
-}
-
-class _ClaimsScreenState extends State<ClaimsScreen> {
-  String search = "";
-  String statusType = "All";
-
-  @override
-=======
 class ClaimsScreen extends StatelessWidget {
   const ClaimsScreen({super.key});
 
   @override
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
   Widget build(BuildContext context) {
     if (mockClaims.isEmpty) {
       return const ClaimEmptyScreen();
@@ -34,47 +19,10 @@ class ClaimsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.detailScreenBackground,
-<<<<<<< HEAD
-      appBar: CustomAppBar(
-        title: 'My Claims',
-        back: false,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-<<<<<<< HEAD
-=======
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => context.go('/admin/claims'),
-                  icon: const Icon(Icons.admin_panel_settings, size: 16),
-                  label: const Text(
-                    'Admin',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
->>>>>>> bf5bcaa7f1c7ba9c155109351553e23cf31247b4
-=======
       appBar: CustomAppBar(title: 'My Claims', back: false),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Text(
@@ -83,90 +31,6 @@ class ClaimsScreen extends StatelessWidget {
             ),
           ),
 
-<<<<<<< HEAD
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search claim...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  search = value;
-                });
-              },
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: DropdownButtonFormField(
-              value: statusType,
-              decoration: InputDecoration(
-                labelText: "Status",
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              items: ["All", "Pending", "Approved", "Rejected"].map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(item),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  statusType = value!;
-                });
-              },
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: mockClaims.where((claim) {
-                final titleMatch = claim.title
-                    .toLowerCase()
-                    .contains(search.toLowerCase());
-
-                final categoryMatch =
-                    statusType == "All" ||
-                    claim.status.name.toLowerCase() == statusType.toLowerCase();
-
-                return titleMatch && categoryMatch;
-              }).length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final filteredClaims = mockClaims.where((claim) {
-                  final titleMatch = claim.title
-                      .toLowerCase()
-                      .contains(search.toLowerCase());
-
-                  final categoryMatch =
-                      statusType == "All" ||
-                      claim.status.name.toLowerCase() == statusType.toLowerCase();
-
-                  return titleMatch && categoryMatch;
-                }).toList();
-
-                final claimObj = filteredClaims[index];
-=======
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -174,7 +38,6 @@ class ClaimsScreen extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final claimObj = mockClaims[index];
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
 
                 final claimMap = {
                   'id': claimObj.id,
@@ -189,24 +52,13 @@ class ClaimsScreen extends StatelessWidget {
                   'imageUrl': claimObj.imageUrl ?? '',
                   'filedDate': claimObj.date.toString().split(' ')[0],
                 };
-<<<<<<< HEAD
-
-=======
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
                 final status = claimMap['status'] ?? 'PENDING';
                 final isPending = status == 'PENDING';
 
                 return ClaimCard(
                   claim: claimMap,
                   onWithdraw: () async {
-<<<<<<< HEAD
-<<<<<<< HEAD
                    
-=======
->>>>>>> bf5bcaa7f1c7ba9c155109351553e23cf31247b4
-=======
-                   
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
                     if (isPending) {
                       await showClaimWithdrawDialog(context);
                     } else {
@@ -222,8 +74,4 @@ class ClaimsScreen extends StatelessWidget {
       ),
     );
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
