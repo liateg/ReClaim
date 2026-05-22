@@ -10,6 +10,8 @@ Files added
 - `lib/core/cache/sqlite_cache.dart` — simple key/value JSON cache built on `sqflite`.
 - `lib/features/items/data/items_service.dart` — service that checks cache before network and writes responses.
 - `test/sqlite_cache_test.dart` — unit tests demonstrating cache behavior using ffi-backed sqlite.
+- `lib/features/claims/data/claims_service.dart` — claims cache/service mirroring items behavior.
+- `test/claims_cache_test.dart` — unit tests for claims cache usage.
 
 Dependencies
 
@@ -167,6 +169,7 @@ Roadmap / Next integration steps
 
 1. Replace `mockItems` consumers with `ItemsService` calls in the UI screens (e.g., Discover, Item detail, Admin lists).
 2. Ensure all create/update/delete flows call `ItemsService().invalidateItemCache()` after successful network responses.
+   2b. Replace `mockClaims` consumers with `ClaimsService` calls and use `addMockClaim`/`updateMockClaim`/`removeMockClaim` helpers during local dev flows.
 3. Add tests for UI flows where caching is expected (integration or widget tests).
 4. Consider expanding cache tables to store metadata (ETag, lastUpdated, version) if you need server-driven validation.
 
