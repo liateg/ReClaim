@@ -7,19 +7,10 @@
     "test": "test"
   },
   "scripts": {
-<<<<<<< HEAD
-    "test:seed": "node --loader ts-node/esm ./test/seed.ts",
-    "test": "npm run test:seed && node --loader ts-node/esm ./node_modules/mocha/bin/mocha \"test/**/*.test.ts\" --exit --timeout 10000",
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "db:apply": "node --loader ts-node/esm ./scripts/apply-schema.ts"
-=======
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "node --loader ts-node/esm --watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
   },
   "keywords": [],
   "author": "",
@@ -27,10 +18,7 @@
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
-<<<<<<< HEAD
     "cookie-parser": "^1.4.7",
-=======
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -39,31 +27,14 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-<<<<<<< HEAD
-    "@types/chai": "^4.3.4",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "@types/pg": "^8.20.0",
-    "@types/supertest": "^2.0.12",
-    "chai": "^4.3.8",
-    "mocha": "^10.2.0",
-    "supertest": "^6.3.3",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "tsx": "^4.22.3",
-=======
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^25.6.0",
-    "@types/pg": "^8.20.0",
-    "ts-node-dev": "^2.0.0",
->>>>>>> a9d134576855e13cb29d8e52d41f23f37bf46afc
     "typescript": "^6.0.3"
   }
 }
