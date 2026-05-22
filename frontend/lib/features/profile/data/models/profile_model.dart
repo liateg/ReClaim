@@ -27,14 +27,25 @@ class ProfileModel {
       }
     }
 
+    int parseInt(dynamic v) {
+      if (v == null) throw FormatException('Missing integer value');
+      if (v is int) return v;
+      final s = v.toString();
+      return int.parse(s);
+    }
+
+    final idVal = json['id'] ?? json['Id'];
+    final createdVal = json['createdAt'] ?? json['created_at'];
+    final updatedVal = json['updatedAt'] ?? json['updated_at'];
+
     return ProfileModel(
-      id: json['id'] is int ? json['id'] as int : int.parse(json['id'].toString()),
-      email: json['email']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      phone: json['phone'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
-      createdAt: parse(json['created_at']?.toString()),
-      updatedAt: parse(json['updated_at']?.toString()),
+      id: parseInt(idVal),
+      email: (json['email'] ?? '').toString(),
+      name: (json['name'] ?? json['full_name'] ?? '').toString(),
+      phone: (json['phone'] ?? null) as String?,
+      avatarUrl: (json['avatarUrl'] ?? json['avatar_url']) as String?,
+      createdAt: parse(createdVal?.toString()),
+      updatedAt: parse(updatedVal?.toString()),
     );
   }
 

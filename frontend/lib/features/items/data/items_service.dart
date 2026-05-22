@@ -26,7 +26,11 @@ class ItemsService {
           options: Options(
               headers:
                   token != null ? {'Authorization': 'Bearer $token'} : {}));
-      final data = res.data as List<dynamic>;
+      // Support both `{ items: [...] }` and direct `[...]` responses
+      final dataRaw = res.data;
+      final data = dataRaw is List
+          ? (dataRaw as List<dynamic>)
+          : (dataRaw['items'] as List<dynamic>);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 5));
       return data;
     } catch (e) {
@@ -52,7 +56,11 @@ class ItemsService {
           options: Options(
               headers:
                   token != null ? {'Authorization': 'Bearer $token'} : {}));
-      final data = Map<String, dynamic>.from(res.data as Map);
+      // Support both `{ item: {...} }` and direct `{...}` responses
+      final dataRaw = res.data;
+      final data = dataRaw is Map && dataRaw.containsKey('item')
+          ? Map<String, dynamic>.from(dataRaw['item'] as Map)
+          : Map<String, dynamic>.from(dataRaw as Map);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 10));
       return data;
     } catch (e) {

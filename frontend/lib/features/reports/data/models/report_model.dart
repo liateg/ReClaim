@@ -32,6 +32,7 @@ class ReportModel {
         return null;
       }
     }
+
     int parseInt(dynamic v) {
       if (v == null) throw FormatException('Missing integer value');
       if (v is int) return v;

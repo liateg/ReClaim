@@ -24,7 +24,10 @@ class ReportsService {
           options: Options(
               headers:
                   token != null ? {'Authorization': 'Bearer $token'} : {}));
-      final data = res.data as List<dynamic>;
+      final dataRaw = res.data;
+      final data = dataRaw is List
+          ? (dataRaw as List<dynamic>)
+          : (dataRaw['reports'] as List<dynamic>);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 5));
       return data;
     } catch (e) {
@@ -48,7 +51,10 @@ class ReportsService {
           options: Options(
               headers:
                   token != null ? {'Authorization': 'Bearer $token'} : {}));
-      final data = Map<String, dynamic>.from(res.data as Map);
+      final dataRaw = res.data;
+      final data = dataRaw is Map && dataRaw.containsKey('report')
+          ? Map<String, dynamic>.from(dataRaw['report'] as Map)
+          : Map<String, dynamic>.from(dataRaw as Map);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 10));
       return data;
     } catch (e) {

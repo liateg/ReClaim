@@ -28,6 +28,7 @@ class ClaimModel {
         return null;
       }
     }
+
     int parseInt(dynamic v) {
       if (v == null) throw FormatException('Missing integer value');
       if (v is int) return v;
@@ -45,7 +46,8 @@ class ClaimModel {
       id: parseInt(idVal),
       itemId: parseInt(itemVal),
       claimantId: parseInt(claimantVal),
-      answerAttempt: (json['answerAttempt'] ?? json['answer_attempt'])?.toString() ?? '',
+      answerAttempt:
+          (json['answerAttempt'] ?? json['answer_attempt'])?.toString() ?? '',
       status: (json['status'] ?? '').toString(),
       reviewNote: (json['reviewNote'] ?? json['review_note']) as String?,
       createdAt: parse(createdVal?.toString()),
