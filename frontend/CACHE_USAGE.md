@@ -67,6 +67,8 @@ Cache Keys & TTLs (current conventions)
 - Reports
   - List: `reports:list` (TTL ~5 minutes)
   - Single: `reports:{id}` (TTL ~10 minutes)
+  
+  Note: The `/reports` list endpoint returns different data depending on the caller's role (admins get all reports; non-admins get only their own reports). To avoid accidental data leakage or stale role-mismatched caches, namespace the list cache by user or role, for example `reports:list:{email}` or `reports:list:{role}:{email}`. Consider updating `ReportsService` to include the user/role in the cache key when caching lists.
 - Profile
   - Per user: `profile:{email}` (TTL ~5–15 minutes depending on volatility)
 
