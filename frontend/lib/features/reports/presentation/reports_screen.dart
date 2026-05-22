@@ -128,7 +128,7 @@ class _ReportCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Target (what was reported)
+      
           if (report.itemId != null || report.claimId != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -143,7 +143,7 @@ class _ReportCard extends StatelessWidget {
               ),
             ),
 
-          // Description
+   
           if (report.description != null && report.description!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -158,7 +158,7 @@ class _ReportCard extends StatelessWidget {
               ),
             ),
 
-          // Admin note (if any)
+      
           if (report.adminNote != null && report.adminNote!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 4),
