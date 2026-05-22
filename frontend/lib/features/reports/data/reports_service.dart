@@ -10,7 +10,8 @@ class ReportsService {
   factory ReportsService() => _instance;
   ReportsService._internal();
 
-  Future<List<dynamic>> getReports({bool forceRefresh = false, Duration? ttl}) async {
+  Future<List<dynamic>> getReports(
+      {bool forceRefresh = false, Duration? ttl}) async {
     final cacheKey = 'reports:list';
     if (!forceRefresh) {
       final cached = await _cache.get<List<dynamic>>(cacheKey);
@@ -20,7 +21,9 @@ class ReportsService {
     final token = await AuthService().getToken();
     try {
       final res = await _dio.get('/reports',
-          options: Options(headers: token != null ? {'Authorization': 'Bearer $token'} : {}));
+          options: Options(
+              headers:
+                  token != null ? {'Authorization': 'Bearer $token'} : {}));
       final data = res.data as List<dynamic>;
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 5));
       return data;
@@ -31,7 +34,8 @@ class ReportsService {
     }
   }
 
-  Future<Map<String, dynamic>> getReportById(String id, {bool forceRefresh = false, Duration? ttl}) async {
+  Future<Map<String, dynamic>> getReportById(String id,
+      {bool forceRefresh = false, Duration? ttl}) async {
     final cacheKey = 'reports:$id';
     if (!forceRefresh) {
       final cached = await _cache.get<Map<String, dynamic>>(cacheKey);
@@ -41,7 +45,9 @@ class ReportsService {
     final token = await AuthService().getToken();
     try {
       final res = await _dio.get('/reports/$id',
-          options: Options(headers: token != null ? {'Authorization': 'Bearer $token'} : {}));
+          options: Options(
+              headers:
+                  token != null ? {'Authorization': 'Bearer $token'} : {}));
       final data = Map<String, dynamic>.from(res.data as Map);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 10));
       return data;

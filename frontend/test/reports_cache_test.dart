@@ -31,7 +31,9 @@ void main() {
     });
 
     test('invalidateReportsCache clears list cache', () async {
-      await cache.set('reports:list', [{'id': 'x'}]);
+      await cache.set('reports:list', [
+        {'id': 'x'}
+      ]);
       await service.invalidateReportsCache();
       final after = await cache.get<List<dynamic>>('reports:list');
       expect(after, isNull);

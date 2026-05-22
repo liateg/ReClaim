@@ -12,7 +12,8 @@ class ProfileService {
 
   String _keyFor(String email) => 'profile:$email';
 
-  Future<Map<String, dynamic>?> getProfile(String email, {bool forceRefresh = false, Duration? ttl}) async {
+  Future<Map<String, dynamic>?> getProfile(String email,
+      {bool forceRefresh = false, Duration? ttl}) async {
     final key = _keyFor(email);
     if (!forceRefresh) {
       final cached = await _cache.get<Map<String, dynamic>>(key);
@@ -21,7 +22,10 @@ class ProfileService {
 
     final token = await AuthService().getToken();
     try {
-      final res = await _dio.get('/profile/$email', options: Options(headers: token != null ? {'Authorization': 'Bearer $token'} : {}));
+      final res = await _dio.get('/profile/$email',
+          options: Options(
+              headers:
+                  token != null ? {'Authorization': 'Bearer $token'} : {}));
       final data = Map<String, dynamic>.from(res.data as Map);
       await _cache.set(key, data, ttl: ttl ?? const Duration(minutes: 10));
       return data;
@@ -32,7 +36,8 @@ class ProfileService {
     }
   }
 
-  Future<void> setProfile(String email, Map<String, dynamic> payload, {Duration? ttl}) async {
+  Future<void> setProfile(String email, Map<String, dynamic> payload,
+      {Duration? ttl}) async {
     final key = _keyFor(email);
     await _cache.set(key, payload, ttl: ttl ?? const Duration(minutes: 10));
   }

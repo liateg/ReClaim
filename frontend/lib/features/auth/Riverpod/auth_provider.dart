@@ -28,7 +28,8 @@ final loginProvider =
   await AppSession.saveToken(response['accessToken']);
   // Seed profile cache with user data
   try {
-    await ProfileService().setProfile(response['user']['email'], Map<String, dynamic>.from(response['user']));
+    await ProfileService().setProfile(
+        response['user']['email'], Map<String, dynamic>.from(response['user']));
   } catch (_) {}
   ref.invalidate(authProvider);
   ref.invalidate(isAdminProvider);
@@ -56,7 +57,8 @@ final registerProvider =
 
   await AppSession.saveToken(response['accessToken']);
   try {
-    await ProfileService().setProfile(response['user']['email'], Map<String, dynamic>.from(response['user']));
+    await ProfileService().setProfile(
+        response['user']['email'], Map<String, dynamic>.from(response['user']));
   } catch (_) {}
   ref.invalidate(authProvider);
 });

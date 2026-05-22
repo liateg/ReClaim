@@ -137,4 +137,3 @@ bool removeMockReport(String id) {
   }
   return false;
 }
-
