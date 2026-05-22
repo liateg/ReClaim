@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SubmitFeedbackScreen extends StatefulWidget {
-  const SubmitFeedbackScreen({super.key});
+class SubmitFeedbackScreen extends ConsumerStatefulWidget {
+  final String? itemId;
+  final String? claimId;
+  const SubmitFeedbackScreen({super.key, this.itemId, this.claimId});
 
   @override
-  State<SubmitFeedbackScreen> createState() => _SubmitFeedbackScreenState();
+  ConsumerState<SubmitFeedbackScreen> createState() => _SubmitFeedbackScreenState();
 }
 
-class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
+
+class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
 
   static const Color kBg        = Color(0xFFFEF9F2);
   static const Color kHeaderBg  = Color(0xCCFEF9F2);
