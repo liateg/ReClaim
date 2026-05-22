@@ -12,7 +12,8 @@ class ItemsService {
 
   /// Fetch list of items. Checks cache first unless [forceRefresh] is true.
   /// Caches results under key 'items:list' for [ttl].
-  Future<List<dynamic>> getItems({bool forceRefresh = false, Duration? ttl}) async {
+  Future<List<dynamic>> getItems(
+      {bool forceRefresh = false, Duration? ttl}) async {
     final cacheKey = 'items:list';
     if (!forceRefresh) {
       final cached = await _cache.get<List<dynamic>>(cacheKey);
@@ -22,7 +23,9 @@ class ItemsService {
     final token = await AuthService().getToken();
     try {
       final res = await _dio.get('/items',
-          options: Options(headers: token != null ? {'Authorization': 'Bearer $token'} : {}));
+          options: Options(
+              headers:
+                  token != null ? {'Authorization': 'Bearer $token'} : {}));
       final data = res.data as List<dynamic>;
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 5));
       return data;
@@ -35,7 +38,8 @@ class ItemsService {
   }
 
   /// Fetch single item by id with cache key 'items:{id}'.
-  Future<Map<String, dynamic>> getItemById(String id, {bool forceRefresh = false, Duration? ttl}) async {
+  Future<Map<String, dynamic>> getItemById(String id,
+      {bool forceRefresh = false, Duration? ttl}) async {
     final cacheKey = 'items:$id';
     if (!forceRefresh) {
       final cached = await _cache.get<Map<String, dynamic>>(cacheKey);
@@ -45,7 +49,9 @@ class ItemsService {
     final token = await AuthService().getToken();
     try {
       final res = await _dio.get('/items/$id',
-          options: Options(headers: token != null ? {'Authorization': 'Bearer $token'} : {}));
+          options: Options(
+              headers:
+                  token != null ? {'Authorization': 'Bearer $token'} : {}));
       final data = Map<String, dynamic>.from(res.data as Map);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 10));
       return data;

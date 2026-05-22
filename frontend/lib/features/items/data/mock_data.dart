@@ -1,7 +1,6 @@
 import 'package:frontend/features/items/data/items_service.dart';
 
 final List<Map<String, dynamic>> mockItems = [
-  
   {
     'id': '1',
     'title': 'Silver MacBook Air',
@@ -39,7 +38,6 @@ final List<Map<String, dynamic>> mockItems = [
     'image_url': 'https://picsum.photos/id/791/1200/800',
   },
 ];
-
 
 void addMockItem({
   required String title,

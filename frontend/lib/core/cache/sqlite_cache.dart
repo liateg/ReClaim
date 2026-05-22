@@ -43,7 +43,8 @@ class SqliteCache {
   Future<void> set(String key, Object value, {Duration? ttl}) async {
     await init();
     final json = jsonEncode(value);
-    final expiry = ttl == null ? null : DateTime.now().add(ttl).millisecondsSinceEpoch;
+    final expiry =
+        ttl == null ? null : DateTime.now().add(ttl).millisecondsSinceEpoch;
     await _db!.insert(
       'cache',
       {'key': key, 'value': json, 'expiry': expiry},
@@ -53,7 +54,8 @@ class SqliteCache {
 
   Future<T?> get<T>(String key) async {
     await init();
-    final rows = await _db!.query('cache', where: 'key = ?', whereArgs: [key], limit: 1);
+    final rows =
+        await _db!.query('cache', where: 'key = ?', whereArgs: [key], limit: 1);
     if (rows.isEmpty) return null;
     final row = rows.first;
     final expiry = row['expiry'] as int?;
