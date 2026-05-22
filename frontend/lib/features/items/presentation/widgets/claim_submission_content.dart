@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/items/data/mock_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
 
-class ClaimSubmissionContent extends StatefulWidget {
+class ClaimSubmissionContent extends ConsumerStatefulWidget {
   final Map<String, dynamic> item;
   const ClaimSubmissionContent({super.key, required this.item});
 
   @override
-  State<ClaimSubmissionContent> createState() => _ClaimSubmissionContentState();
+  ConsumerState<ClaimSubmissionContent> createState() =>
+      _ClaimSubmissionContentState();
 }
 
-class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
+class _ClaimSubmissionContentState
+    extends ConsumerState<ClaimSubmissionContent> {
   final TextEditingController _answerController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -18,7 +22,7 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
     super.dispose();
   }
 
-  void _submitClaim() {
+  Future<void> _submitClaim() async {
     final id = widget.item['id']?.toString();
     final answer = _answerController.text.trim();
     if (id == null || answer.isEmpty) {
@@ -28,18 +32,32 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
       return;
     }
 
-    final success = submitClaimForItem(id: id, answer: answer);
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incorrect verification answer.')),
+    setState(() => _isSubmitting = true);
+    try {
+      final success = await ref.read(
+        submitClaimProvider((id: id, answer: answer)).future,
       );
-      return;
-    }
 
-    Navigator.pop(context, true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Claim submitted successfully.')),
-    );
+      if (!mounted) return;
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Incorrect verification answer.')),
+        );
+        return;
+      }
+
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Claim submitted successfully.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit claim: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -96,8 +114,17 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
                   backgroundColor: const Color(0xFF1B5E3E),
                   foregroundColor: Colors.white,
                 ),
-                onPressed: _submitClaim,
-                child: const Text("Submit Claim"),
+                onPressed: _isSubmitting ? null : _submitClaim,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text("Submit Claim"),
               ),
             ),
             const SizedBox(height: 8),
@@ -118,18 +145,23 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
   }
 
   Widget _infoBox(ThemeData theme, Map<String, dynamic> item) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: theme.primaryColor, borderRadius: BorderRadius.circular(15)),
-    child: Column(children: [
-      _row(Icons.location_on, (item['location'] as String?) ?? 'Unknown location'),
-      const Divider(color: Colors.white24),
-      _row(Icons.calendar_today, (item['date_found'] as String?) ?? 'Unknown date'),
-    ]),
-  );
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: theme.primaryColor, borderRadius: BorderRadius.circular(15)),
+        child: Column(children: [
+          _row(Icons.location_on,
+              (item['location'] as String?) ?? 'Unknown location'),
+          const Divider(color: Colors.white24),
+          _row(Icons.calendar_today,
+              (item['date_found'] as String?) ?? 'Unknown date'),
+        ]),
+      );
 
   Widget _row(IconData icon, String val) => Row(children: [
-    Icon(icon, color: Colors.white, size: 18),
-    const SizedBox(width: 10),
-    Text(val, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-  ]);
+        Icon(icon, color: Colors.white, size: 18),
+        const SizedBox(width: 10),
+        Text(val,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
+      ]);
 }
