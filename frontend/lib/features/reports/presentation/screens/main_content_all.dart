@@ -111,11 +111,8 @@ class FeedbacksAllScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Row(
         children: [
-         
           GestureDetector(
-            onTap: () {
-              
-            },
+            onTap: () {},
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
               decoration: ShapeDecoration(
@@ -144,10 +141,8 @@ class FeedbacksAllScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-        
           GestureDetector(
             onTap: () {
-        
               Navigator.pushNamed(context, '/feedbacks-pending');
             },
             child: Container(
@@ -172,10 +167,8 @@ class FeedbacksAllScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          
           GestureDetector(
             onTap: () {
-          
               Navigator.pushNamed(context, '/feedbacks-reviewed');
             },
             child: Container(
@@ -265,7 +258,8 @@ class FeedbacksAllScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE6E2DB),
                   borderRadius: BorderRadius.circular(6),
@@ -331,7 +325,6 @@ class FeedbacksAllScreen extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  
                   Navigator.pushNamed(context, '/submit-feedback');
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -426,7 +419,8 @@ class FeedbacksAllScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFD2E8D9),
                   borderRadius: BorderRadius.circular(6),
@@ -485,12 +479,12 @@ class FeedbacksAllScreen extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-             
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Delete Feedback'),
-                      content: const Text('Are you sure you want to delete this feedback?'),
+                      content: const Text(
+                          'Are you sure you want to delete this feedback?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -498,13 +492,13 @@ class FeedbacksAllScreen extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: () {
-                       
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Feedback deleted')),
                             );
                           },
-                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                          child: const Text('Delete',
+                              style: TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),
