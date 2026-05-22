@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/reports_service.dart';
 
 enum FeedbackReportStatus {
   pending,
@@ -111,4 +112,29 @@ const List<FeedbackReportMock> kMockFeedbackReports = [
         'User’s point about placement is valid; the latest update moved it to prioritize search. We will consider adding a FAB for quick add in the next release.',
   ),
 ];
+
+void addMockReport(FeedbackReportMock report) {
+  // Prepend new report
+  // Normally IDs are generated; here we insert as given for dev.
+  kMockFeedbackReports.insert(0, report);
+  ReportsService().invalidateReportsCache();
+}
+
+bool updateMockReport(String id, FeedbackReportMock updated) {
+  final idx = kMockFeedbackReports.indexWhere((r) => r.id == id);
+  if (idx == -1) return false;
+  kMockFeedbackReports[idx] = updated;
+  ReportsService().invalidateReportsCache(id: id);
+  return true;
+}
+
+bool removeMockReport(String id) {
+  final before = kMockFeedbackReports.length;
+  kMockFeedbackReports.removeWhere((r) => r.id == id);
+  if (kMockFeedbackReports.length < before) {
+    ReportsService().invalidateReportsCache(id: id);
+    return true;
+  }
+  return false;
+}
 
