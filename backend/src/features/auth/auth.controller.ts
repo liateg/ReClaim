@@ -95,8 +95,11 @@ export const registerUser = async (req: Request, res: Response) => {
       accessToken,
     });
   } catch (error) {
-    console.error("Error registering user:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Registration error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 };
 
@@ -324,10 +327,10 @@ export const logInUser = async (req: Request, res: Response) => {
       accessToken,
     });
   } catch (error) {
-    console.error("Error logging in user details:", error);
-    return res.status(500).json({ 
-      message: "Internal server error", 
-      error: error instanceof Error ? error.message : String(error) 
+    console.error("Login error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 };

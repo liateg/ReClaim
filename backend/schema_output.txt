@@ -1,0 +1,8 @@
+USERS_SCHEMA_START
+id: integer
+full_name: character varying
+email: character varying
+password_hash: text
+role: character varying
+created_at: timestamp without time zone
+USERS_SCHEMA_END

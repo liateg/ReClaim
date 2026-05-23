@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 import App from './app.js';
 import { pool } from './config/db.js';
-/*
 pool.connect()
   .then(() => {
     console.log('Connected to the database');
@@ -11,7 +10,6 @@ pool.connect()
   .catch((err) => {
     console.error('Error connecting to the database', err);
   });
-*/
 
 const PORT = process.env.PORT || 3000;
 App.get('/health',(req,res)=>{
