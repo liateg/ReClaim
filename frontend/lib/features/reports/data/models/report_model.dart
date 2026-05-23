@@ -116,14 +116,21 @@ class Report {
     final createdVal = json['createdAt'] ?? json['created_at'];
     final updatedVal = json['updatedAt'] ?? json['updated_at'];
 
+    final reasonValue = json['reason'];
+    final statusValue = json['status'];
+
     return Report(
       id: parseInt(idVal),
       reporterId: parseInt(reporterVal),
       itemId: itemVal == null ? null : parseInt(itemVal),
       claimId: claimVal == null ? null : parseInt(claimVal),
-      reason: (json['reason'] ?? ''),
+      reason: reasonValue is ReportReason
+          ? reasonValue
+          : ReportReason.fromString(reasonValue?.toString() ?? ''),
       description: (json['description'] ?? null) as String?,
-      status: (json['status'] ?? ''),
+      status: statusValue is ReportStatus
+          ? statusValue
+          : ReportStatus.fromString(statusValue?.toString() ?? ''),
       adminNote: (json['adminNote'] ?? json['admin_note']) as String?,
       createdAt: parse(createdVal?.toString()),
       updatedAt: parse(updatedVal?.toString()),
@@ -135,9 +142,9 @@ class Report {
         'reporter_id': reporterId,
         'item_id': itemId,
         'claim_id': claimId,
-        'reason': reason,
+        'reason': reason.name,
         'description': description,
-        'status': status,
+        'status': status.name,
         'admin_note': adminNote,
         'created_at': createdAt?.toIso8601String(),
         'updated_at': updatedAt?.toIso8601String(),

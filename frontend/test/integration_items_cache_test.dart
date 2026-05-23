@@ -15,7 +15,7 @@ import 'package:frontend/core/session/services/auth_service.dart';
 void main() {
   group('Integration: Items/Claims/Profile -> Cache -> Model -> Backend', () {
     final cache = SqliteCache();
-    final dio = Dio()..options.baseUrl = 'http://localhost:3000';
+    final dio = Dio()..options.baseUrl = 'http://10.0.2.2:3000';
     String? token;
 
     setUpAll(() async {

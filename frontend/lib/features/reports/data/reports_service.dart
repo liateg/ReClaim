@@ -25,8 +25,8 @@ class ReportsService {
               headers:
                   token != null ? {'Authorization': 'Bearer $token'} : {}));
       final dataRaw = res.data;
-        final data = dataRaw is List
-          ? dataRaw
+      final data = dataRaw is List
+          ? (dataRaw)
           : (dataRaw['reports'] as List<dynamic>);
       await _cache.set(cacheKey, data, ttl: ttl ?? const Duration(minutes: 5));
       return data;
