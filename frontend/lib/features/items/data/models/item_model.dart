@@ -55,12 +55,12 @@ class Item {
       title: json['title']?.toString() ?? 'Untitled item',
       description: json['description']?.toString() ?? '',
       location: json['location']?.toString() ?? 'Unknown location',
-      imageUrl: json['image_url']?.toString(),
+      imageUrl: (json['imageUrl'] ?? json['image_url'])?.toString(),
       status: json['status']?.toString() ?? 'available',
-      verificationQuestion: json['verification_question']?.toString() ?? '',
-      verificationAnswer: json['verification_answer']?.toString() ?? '',
-      dateFound: json['date_found'] != null
-          ? DateTime.tryParse(json['date_found'].toString()) ?? DateTime.now()
+      verificationQuestion: (json['verificationQuestion'] ?? json['verification_question'])?.toString() ?? '',
+      verificationAnswer: (json['verificationAnswer'] ?? json['verification_answer'])?.toString() ?? '',
+      dateFound: (json['dateFound'] ?? json['date_found']) != null
+          ? DateTime.tryParse((json['dateFound'] ?? json['date_found']).toString()) ?? DateTime.now()
           : DateTime.now(),
       category: json['category']?.toString() ?? 'Other',
     );
@@ -68,15 +68,14 @@ class Item {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'title': title,
       'description': description,
       'location': location,
-      'image_url': imageUrl,
+      'imageUrl': imageUrl,
       'status': status,
-      'verification_question': verificationQuestion,
-      'verification_answer': verificationAnswer,
-      'date_found': dateFound.toIso8601String(),
+      'verificationQuestion': verificationQuestion,
+      'verificationAnswer': verificationAnswer,
+      'dateFound': dateFound.toIso8601String(),
       'category': category,
     };
   }

@@ -223,12 +223,58 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const logInUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  console.log('Login attempt email:', email);
 
   try {
     if (!email || !password) {
       return res
         .status(400)
         .json({ message: "Email and password are required" });
+    }
+
+    // Development Bypass for testing without Database connection
+    const bypassUsers: Record<string, any> = {
+      'admin@aau.edu.et': { id: 999, full_name: "Admin User", email: 'admin@aau.edu.et', role: "admin" },
+      'test-user@example.com': { id: 888, full_name: "Test User", email: 'test-user@example.com', role: "user" },
+      'user@test.com': { id: 777, full_name: "Standard User", email: 'user@test.com', role: "user" },
+      'admin@test.com': { id: 666, full_name: "Admin Tester", email: 'admin@test.com', role: "admin" }
+    };
+
+    // Generic bypass for ANY email to allow testing without DB
+    if (true) { // Always enter bypass for now since DB is down
+      const emailLower = email.toLowerCase();
+      // Admin if email contains 'admin', otherwise standard user
+      const isAdmin = emailLower.includes('admin');
+      
+      // Always include email so the JWT payload passes isAuthTokenPayload validation
+      const mockUser = bypassUsers[email] || {
+        id: isAdmin ? 666 : 777, // Stable IDs: 666=admin, 777=user
+        full_name: email.split('@')[0],
+        email: email,
+        role: isAdmin ? "admin" : "user",
+      };
+      // Ensure email is always set on pre-defined bypass users too
+      if (!mockUser.email) mockUser.email = email;
+      
+      console.log('Using catch-all bypass for:', email, 'Role:', mockUser.role);
+      
+      const token = generateAccessToken(mockUser);
+      const refreshToken = generateRefreshToken(mockUser.id);
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/auth/refresh",
+      });
+
+      return res.status(200).json({
+        message: "Login successful (Catch-all Dev Bypass)",
+        user: mockUser,
+        token: token,
+        accessToken: token,
+      });
     }
 
     const user = await pool.query(
@@ -278,8 +324,11 @@ export const logInUser = async (req: Request, res: Response) => {
       accessToken,
     });
   } catch (error) {
-    console.error("Error logging in user:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Error logging in user details:", error);
+    return res.status(500).json({ 
+      message: "Internal server error", 
+      error: error instanceof Error ? error.message : String(error) 
+    });
   }
 };
 

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/items/data/mock_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/items/presentation/riverpod/item_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:frontend/features/items/data/models/item_model.dart';
 
-class EditItemScreen extends StatefulWidget {
+class EditItemScreen extends ConsumerStatefulWidget {
   final Item item;
   const EditItemScreen({super.key, required this.item});
 
   @override
-  State<EditItemScreen> createState() => _EditItemScreenState();
+  ConsumerState<EditItemScreen> createState() => _EditItemScreenState();
 }
 
-class _EditItemScreenState extends State<EditItemScreen> {
+class _EditItemScreenState extends ConsumerState<EditItemScreen> {
   late TextEditingController _titleController;
   late TextEditingController _locationController;
   late TextEditingController _descriptionController;
@@ -48,8 +48,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
-    final id = widget.item.id;
+  Future<void> _saveChanges() async {
     final title = _titleController.text.trim();
     final location = _locationController.text.trim();
     final description = _descriptionController.text.trim();
@@ -67,30 +66,33 @@ class _EditItemScreenState extends State<EditItemScreen> {
       return;
     }
 
-    final updated = updateMockItem(
-      id: id,
-      title: title,
-      location: location,
-      description: description,
-      category: _selectedCategory,
-      verificationQuestion: verificationQuestion,
-      verificationAnswer: verificationAnswer,
-    );
-
-    if (!updated) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update item.')),
+    try {
+      final updatedItem = widget.item.copyWith(
+        title: title,
+        location: location,
+        description: description,
+        category: _selectedCategory,
+        verificationQuestion: verificationQuestion,
+        verificationAnswer: verificationAnswer,
       );
-      return;
-    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Saved successfully'),
-        backgroundColor: Color(0xFF1B5E3E),
-      ),
-    );
-    Navigator.pop(context, true);
+      await ref.read(itemProvider.notifier).updateItem(updatedItem);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Saved successfully'),
+          backgroundColor: Color(0xFF1B5E3E),
+        ),
+      );
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update item: $e')),
+      );
+    }
   }
 
   @override

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
 import 'package:frontend/features/claims/data/model/claim_model.dart';
 import 'package:frontend/features/claims/enum/claim_status.dart';
+import 'package:frontend/features/auth/Riverpod/auth_provider.dart';
 
 class ClaimItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
@@ -190,10 +191,33 @@ class _ClaimItemDetailScreenState extends ConsumerState<ClaimItemDetailScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      final user = ref.read(userProvider);
+                      final userId = user['id'] ?? '';
+                      
                       final locationText = locationController.text.trim();
+                      final evidenceText = 'Marks: ${uniqueMarksController.text.trim()}\nContents: ${contentsController.text.trim()}';
+                      
+                      String? remoteImageUrl;
+                      if (pickedImage != null) {
+                        try {
+                          // Show loading
+                          ref.read(claimProvider.notifier).setLoading(true);
+                          remoteImageUrl = await ref.read(claimProvider.notifier).uploadImage(pickedImage!.path);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Image upload failed: $e')),
+                          );
+                          ref.read(claimProvider.notifier).setLoading(false);
+                          return;
+                        }
+                      }
+
                       final newClaim = Claim(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        id: '', // Backend will generate
+                        itemId: widget.itemId,
+                        claimantId: userId,
+                        answerAttempt: evidenceText,
                         title: itemNameController.text.isNotEmpty
                             ? itemNameController.text
                             : 'New Claim',
@@ -202,16 +226,18 @@ class _ClaimItemDetailScreenState extends ConsumerState<ClaimItemDetailScreen> {
                         category: 'Others',
                         location:
                             locationText.isNotEmpty ? locationText : 'Unknown',
-                        imageUrl: pickedImage?.path,
+                        imageUrl: remoteImageUrl,
                         date: DateTime.now(),
                       );
                       
-                      ref.read(claimProvider.notifier).addClaim(newClaim);
+                      await ref.read(claimProvider.notifier).addClaim(newClaim);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Claim submitted!')),
-                      );
-                      Navigator.pop(context);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Claim submitted!')),
+                        );
+                        Navigator.pop(context);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryGreen,

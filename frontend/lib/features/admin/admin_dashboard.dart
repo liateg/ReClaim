@@ -1,71 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
 
-class AdminDashboard extends StatelessWidget {
+class AdminDashboard extends ConsumerWidget {
   const AdminDashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimState = ref.watch(claimProvider);
+    final totalClaims = claimState.claims.length;
+    final pendingClaims = claimState.claims.where((c) => c.status.name == 'pending').length;
+
     return Scaffold(
       backgroundColor: AppTheme.detailScreenBackground,
       appBar: const CustomAppBar(title: 'Command Center', back: false),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Overseeing the framework of lost goods and the rhythm of recovery across NYT spaces.',
-              style: TextStyle(
-                color: AppTheme.descriptionText,
-                fontSize: 13,
-                height: 1.45,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(claimProvider.notifier).loadClaims();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Overseeing the framework of lost goods and the rhythm of recovery across NYT spaces.',
+                style: TextStyle(
+                  color: AppTheme.descriptionText,
+                  fontSize: 13,
+                  height: 1.45,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            _buildStatsPanel(),
-            const SizedBox(height: 18),
-            Text(
-              'Management Modules',
-              style: TextStyle(
-                color: AppTheme.primaryGreen,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+              const SizedBox(height: 14),
+              _buildStatsPanel(totalClaims, pendingClaims),
+              const SizedBox(height: 18),
+              Text(
+                'Management Modules',
+                style: TextStyle(
+                  color: AppTheme.primaryGreen,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            _ModuleCard(
-              title: 'All Posted Items',
-              subtitle: 'Organize, archive, and oversee posted findings.',
-              chipLabel: 'Open Module',
-              accentIcon: Icons.inventory_2_outlined,
-              onTap: () => context.go('/admin/items'),
-            ),
-            const SizedBox(height: 12),
-            _ModuleCard(
-              title: 'All Claimed Items',
-              subtitle: 'Inspect movement of claims and outcomes in real time.',
-              chipLabel: 'Review Claims',
-              accentIcon: Icons.fact_check_outlined,
-              onTap: () => context.go('/admin/claims'),
-            ),
-            const SizedBox(height: 12),
-            _ModuleCard(
-              title: 'All Feedback',
-              subtitle: 'Evaluate user sentiment and recurring concerns.',
-              chipLabel: 'Open Reports',
-              accentIcon: Icons.insights_outlined,
-              onTap: () => context.go('/admin/reports'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              _ModuleCard(
+                title: 'All Posted Items',
+                subtitle: 'Organize, archive, and oversee posted findings.',
+                chipLabel: 'Open Module',
+                accentIcon: Icons.inventory_2_outlined,
+                onTap: () => context.go('/admin/items'),
+              ),
+              const SizedBox(height: 12),
+              _ModuleCard(
+                title: 'All Claimed Items',
+                subtitle: 'Inspect movement of claims and outcomes in real time.',
+                chipLabel: 'Review Claims',
+                accentIcon: Icons.fact_check_outlined,
+                onTap: () => context.go('/admin/claims'),
+              ),
+              const SizedBox(height: 12),
+              _ModuleCard(
+                title: 'All Feedback',
+                subtitle: 'Evaluate user sentiment and recurring concerns.',
+                chipLabel: 'Open Reports',
+                accentIcon: Icons.insights_outlined,
+                onTap: () => context.go('/admin/reports'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatsPanel() {
+  Widget _buildStatsPanel(int total, int pending) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -75,9 +87,9 @@ class AdminDashboard extends StatelessWidget {
       child: Column(
         children: [
           _StatCard(
-            label: 'TOTAL REPORTED ITEMS',
-            value: '1,248',
-            subtitle: '+17 this week',
+            label: 'TOTAL CLAIMS RECEIVED',
+            value: total.toString(),
+            subtitle: 'Real-time sync',
             compact: false,
           ),
           const SizedBox(height: 10),
@@ -85,9 +97,9 @@ class AdminDashboard extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatCard(
-                  label: 'PENDING CLAIMS',
-                  value: '42',
-                  subtitle: 'Needs Review',
+                  label: 'PENDING REVIEW',
+                  value: pending.toString(),
+                  subtitle: 'Needs Attention',
                   compact: true,
                 ),
               ),
@@ -95,8 +107,8 @@ class AdminDashboard extends StatelessWidget {
               Expanded(
                 child: _StatCard(
                   label: 'ACTIVE FEEDBACK',
-                  value: '07',
-                  subtitle: 'Requires Attention',
+                  value: '07', // Keeping this hardcoded as reports aren't linked yet
+                  subtitle: 'Check Reports',
                   compact: true,
                 ),
               ),

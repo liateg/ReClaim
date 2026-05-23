@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/items/data/mock_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/items/presentation/riverpod/item_provider.dart';
 import 'package:frontend/features/items/presentation/widgets/item_card.dart';
 import 'package:frontend/features/items/presentation/widgets/discovery_top_bar.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/features/items/presentation/widgets/category_chip.dart';
-
 import 'package:frontend/features/items/data/models/item_model.dart';
 
-class ClaimsScreen extends StatefulWidget {
+class ClaimsScreen extends ConsumerStatefulWidget {
   const ClaimsScreen({super.key});
 
   @override
-  State<ClaimsScreen> createState() => _ClaimsScreenState();
+  ConsumerState<ClaimsScreen> createState() => _ClaimsScreenState();
 }
 
-class _ClaimsScreenState extends State<ClaimsScreen> {
+class _ClaimsScreenState extends ConsumerState<ClaimsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
 
@@ -24,9 +24,9 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
     super.dispose();
   }
 
-  List<Item> get _filteredItems {
+  List<Item> _filterItems(List<Item> items) {
     final query = _searchController.text.trim().toLowerCase();
-    return mockItems.where((item) {
+    return items.where((item) {
       final title = item.title.toLowerCase();
       final location = item.location.toLowerCase();
       final category = item.category;
@@ -38,7 +38,8 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final items = _filteredItems;
+    final itemsState = ref.watch(itemProvider);
+    final items = _filterItems(itemsState.items);
 
     return Scaffold(
       appBar: const CustomAppBar(

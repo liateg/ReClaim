@@ -57,28 +57,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!mounted) return;
 
-      final isLoggedIn = await ref.read(authProvider.future);
-      if (!mounted) return;
-
+      // Instead of re-reading authProvider, we check isAdmin and navigate
+      // because if loginProvider succeeded, the state is valid.
       final isAdmin = ref.read(isAdminProvider);
-
-      if (isLoggedIn) {
-        if (isAdmin) {
-          context.go(RoutePaths.adminDashboard);
-        } else {
-          context.go(RoutePaths.home);
-        }
+      
+      if (isAdmin) {
+        context.go(RoutePaths.adminDashboard);
       } else {
-        setState(() {
-          _generalError = 'Invalid email or password. Please try again.';
-          _passwordError = 'Incorrect password';
-        });
+        context.go(RoutePaths.home);
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _generalError = 'Invalid email or password. Please try again.';
-        _passwordError = 'Incorrect password';
+        _generalError = 'Error: ${e.toString()}';
       });
     }
   }

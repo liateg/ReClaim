@@ -9,6 +9,7 @@ import '../../utils/theme/app_theme.dart';
 import 'package:frontend/features/admin/data/admin_claim_review_mock.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/api/dio_client.dart';
 
 class AdminClaimDetailScreen extends ConsumerWidget {
   final String claimId;
@@ -27,6 +28,7 @@ class AdminClaimDetailScreen extends ConsumerWidget {
       ClaimStatus.pending => 'PENDING REVIEW',
       ClaimStatus.approved => 'APPROVED',
       ClaimStatus.rejected => 'REJECTED',
+      ClaimStatus.withdrawn => 'WITHDRAWN',
     };
 
     return Scaffold(
@@ -196,7 +198,7 @@ class AdminClaimDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 28),
             const Text(
-              'Matching Evidence',
+              'Submitted Evidence',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -204,9 +206,7 @@ class AdminClaimDetailScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _evidenceBlock(x.evidenceQuestion1, x.evidenceAnswer1),
-            const SizedBox(height: 14),
-            _evidenceBlock(x.evidenceQuestion2, x.evidenceAnswer2),
+            _evidenceBlock('USER VERIFICATION ANSWER', claim.answerAttempt ?? 'No answer provided'),
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
@@ -240,17 +240,17 @@ class AdminClaimDetailScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () {
-                      ref.read(claimProvider.notifier).updateClaim(
-                            claim.copyWith(status: ClaimStatus.approved),
-                          );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Claim confirmed.'),
-                          backgroundColor: Color(0xFF003925),
-                        ),
-                      );
-                      context.pop();
+                    onPressed: claimState.isLoading ? null : () async {
+                      await ref.read(claimProvider.notifier).approveClaim(claim.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Claim confirmed successfully.'),
+                            backgroundColor: Color(0xFF003925),
+                          ),
+                        );
+                        context.pop();
+                      }
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF003925),
@@ -260,10 +260,12 @@ class AdminClaimDetailScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    icon: const Icon(Icons.check_rounded, size: 20),
-                    label: const Text(
-                      'Confirm Claim',
-                      style: TextStyle(
+                    icon: claimState.isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.check_rounded, size: 20),
+                    label: Text(
+                      claimState.isLoading ? 'Processing...' : 'Confirm Claim',
+                      style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -273,17 +275,19 @@ class AdminClaimDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      ref.read(claimProvider.notifier).updateClaim(
+                    onPressed: claimState.isLoading ? null : () async {
+                      await ref.read(claimProvider.notifier).updateClaim(
                             claim.copyWith(status: ClaimStatus.rejected),
                           );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Claim denied.'),
-                          backgroundColor: Colors.grey.shade800,
-                        ),
-                      );
-                      context.pop();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Claim denied.'),
+                            backgroundColor: Colors.grey.shade800,
+                          ),
+                        );
+                        context.pop();
+                      }
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF003925),
@@ -294,13 +298,15 @@ class AdminClaimDetailScreen extends ConsumerWidget {
                       ),
                       backgroundColor: const Color(0xFFE6E2DB),
                     ),
-                    child: const Text(
-                      'Deny Claim',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
+                    child: claimState.isLoading
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF003925), strokeWidth: 2))
+                      : const Text(
+                          'Deny Claim',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
                   ),
                 ),
               ],
@@ -316,11 +322,13 @@ class AdminClaimDetailScreen extends ConsumerWidget {
       ClaimStatus.pending => const Color(0xFFD2E8D9),
       ClaimStatus.approved => const Color(0xFFB9EFD0),
       ClaimStatus.rejected => const Color(0xFFFFDAD6),
+      ClaimStatus.withdrawn => const Color(0xFFE0E0E0),
     };
     final fg = switch (status) {
       ClaimStatus.pending => const Color(0xFF55695D),
       ClaimStatus.approved => const Color(0xFF003925),
       ClaimStatus.rejected => const Color(0xFF93000A),
+      ClaimStatus.withdrawn => const Color(0xFF616161),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -355,7 +363,9 @@ class AdminClaimDetailScreen extends ConsumerWidget {
                         size: 56, color: Color(0xFF77756F)),
                   )
                 : Image.network(
-                    claim.imageUrl!,
+                    claim.imageUrl!.startsWith('http')
+                      ? claim.imageUrl!
+                      : '${DioClient.baseUrl}${claim.imageUrl}',
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFFE6E2DB),

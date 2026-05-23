@@ -4,6 +4,8 @@ import '../../enum/claim_status.dart';
 final List<Claim> mockClaims = [
   Claim(
     id: '1',
+    itemId: 'item-1',
+    claimantId: 'user-1',
     title: 'Lost Laptop Charger',
     category: 'Electronics',
     description: 'My Dell charger was left near the reading desks.',
@@ -14,6 +16,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '2',
+    itemId: 'item-2',
+    claimantId: 'user-2',
     title: 'Student ID Card',
     category: 'Accessories',
     description: 'Blue student ID card with lanyard was misplaced.',
@@ -24,6 +28,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '3',
+    itemId: 'item-3',
+    claimantId: 'user-3',
     title: 'AirPods Case',
     category: 'Electronics',
     description: 'White AirPods case with one earbud missing.',
@@ -34,6 +40,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '4',
+    itemId: 'item-4',
+    claimantId: 'user-1',
     title: 'Calculus Notebook',
     category: 'Accessories',
     description: 'Black spiral notebook with MATH 201 notes.',
@@ -44,6 +52,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '5',
+    itemId: 'item-5',
+    claimantId: 'user-2',
     title: 'Textbook - Physics Vol. 1',
     category: 'Accessories',
     description: 'Hardcover textbook with name written on first page.',
@@ -54,6 +64,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '6',
+    itemId: 'item-6',
+    claimantId: 'user-3',
     title: 'HP Scientific Calculator',
     category: 'Electronics',
     description: 'Grey calculator with sticker on the back.',
@@ -64,6 +76,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '7',
+    itemId: 'item-7',
+    claimantId: 'user-1',
     title: 'USB Flash Drive',
     category: 'Electronics',
     description: '32GB black USB drive containing class presentations.',
@@ -74,6 +88,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '8',
+    itemId: 'item-8',
+    claimantId: 'user-2',
     title: 'Pen Pouch',
     category: 'Accessories',
     description: 'Canvas pouch with pens, highlighters, and eraser.',
@@ -84,6 +100,8 @@ final List<Claim> mockClaims = [
   ),
   Claim(
     id: '9',
+    itemId: 'item-9',
+    claimantId: 'user-3',
     title: 'Tablet with Keyboard Cover',
     category: 'Electronics',
     description: 'Silver tablet used for note-taking during lectures.',

@@ -30,7 +30,7 @@ class ItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Image.network(
-              imageUrl,
+              imageUrl.startsWith('/uploads/') ? 'http://localhost:3000$imageUrl' : imageUrl,
               height: 180, 
               width: double.infinity, 
               fit: BoxFit.cover,

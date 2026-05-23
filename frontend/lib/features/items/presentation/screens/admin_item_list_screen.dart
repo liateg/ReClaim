@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/items/presentation/riverpod/item_provider.dart';
 import 'package:frontend/features/items/presentation/screens/edit_item_screen.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
-import 'package:frontend/features/items/data/mock_data.dart';
 import 'package:go_router/go_router.dart';
-
-
 import 'package:frontend/features/items/data/models/item_model.dart';
 
-class AdminItemListScreen extends StatefulWidget {
+class AdminItemListScreen extends ConsumerStatefulWidget {
   const AdminItemListScreen({super.key});
 
   @override
-  State<AdminItemListScreen> createState() => _AdminItemListScreenState();
+  ConsumerState<AdminItemListScreen> createState() => _AdminItemListScreenState();
 }
 
-class _AdminItemListScreenState extends State<AdminItemListScreen> {
+class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -23,10 +22,10 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     super.dispose();
   }
 
-  List<Item> get _filteredPosts {
+  List<Item> _filterPosts(List<Item> items) {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return mockItems;
-    return mockItems.where((item) {
+    if (query.isEmpty) return items;
+    return items.where((item) {
       final title = item.title.toLowerCase();
       final location = item.location.toLowerCase();
       return title.contains(query) || location.contains(query);
@@ -108,23 +107,23 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
   }
 
   Future<void> _deleteItem(Item item) async {
-    final id = item.id;
-
     final confirm = await _showDeleteConfirmationDialog();
     if (!confirm) return;
-    removeMockItem(id);
-    if (!mounted) return;
-    setState(() {});
+    
+    await ref.read(itemProvider.notifier).deleteItem(item.id);
     _showTopSuccessBanner('Deleted successfully');
   }
 
   @override
   Widget build(BuildContext context) {
+    final itemsState = ref.watch(itemProvider);
+    final list = _filterPosts(itemsState.items);
+
     return Scaffold(
-      appBar: CustomAppBar(title: "My Posts", back: false),
+      appBar: const CustomAppBar(title: "My Posts", back: false),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: _filteredPosts.isEmpty && _searchController.text.isEmpty
+        child: list.isEmpty && _searchController.text.isEmpty
             ? Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -178,12 +177,12 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
                   ),
                   const SizedBox(height: 20),
                   Expanded(
-                    child: _filteredPosts.isEmpty
+                    child: list.isEmpty
                         ? const Center(child: Text('No matching posts found'))
                         : ListView.builder(
-                            itemCount: _filteredPosts.length,
+                            itemCount: list.length,
                             itemBuilder: (context, index) =>
-                                _buildAdminCard(_filteredPosts[index], context),
+                                _buildAdminCard(list[index], context),
                           ),
                   ),
                 ],

@@ -32,6 +32,9 @@ class ClaimImagePreview extends StatelessWidget {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return Image.network(url, fit: BoxFit.cover);
     }
+    if (url.startsWith('/uploads/')) {
+      return Image.network('http://localhost:3000$url', fit: BoxFit.cover);
+    }
     final file = File(url);
     if (file.existsSync()) {
       return Image.file(file, fit: BoxFit.cover);

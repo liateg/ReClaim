@@ -9,6 +9,7 @@ class AppSession {
   static AppUserRole role = AppUserRole.user;
   static String email = '';
   static String displayName = '';
+  static String id = '';
   static String institutionName = 'Addis Ababa University';
   static String institutionDepartment = 'Founders Guild & Assets Management';
 
@@ -24,6 +25,7 @@ class AppSession {
       role = savedRole == 'admin' ? AppUserRole.admin : AppUserRole.user;
       email = savedEmail ?? '';
       displayName = savedName ?? '';
+      id = (await _storage.read(key: 'id')) ?? '';
     }
   }
 
@@ -32,15 +34,18 @@ class AppSession {
     required AppUserRole role,
     required String email,
     required String displayName,
+    required String id,
   }) async {
     AppSession.role = role;
     AppSession.email = email;
     AppSession.displayName = displayName;
+    AppSession.id = id;
 
     // Save to phone
     await _storage.write(key: 'role', value: role.name);
     await _storage.write(key: 'email', value: email);
     await _storage.write(key: 'name', value: displayName);
+    await _storage.write(key: 'id', value: id);
   }
 
   // Sign out (clears everything)
@@ -53,11 +58,16 @@ class AppSession {
     await _storage.delete(key: 'role');
     await _storage.delete(key: 'email');
     await _storage.delete(key: 'name');
+    await _storage.delete(key: 'id');
     await clearToken();
   }
 
   // Check if user is logged in
   static Future<bool> isLoggedIn() async {
+    // Check memory first (fast)
+    if (email.isNotEmpty && id.isNotEmpty) return true;
+    
+    // Check storage fallback
     final token = await _storage.read(key: 'role');
     return token != null;
   }

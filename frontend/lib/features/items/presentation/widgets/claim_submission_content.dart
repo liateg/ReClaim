@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/items/data/mock_data.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/auth/Riverpod/auth_provider.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+import 'package:frontend/features/claims/data/model/claim_model.dart';
+import 'package:frontend/features/claims/enum/claim_status.dart';
 import 'package:frontend/features/items/data/models/item_model.dart';
 
-class ClaimSubmissionContent extends StatefulWidget {
+class ClaimSubmissionContent extends ConsumerStatefulWidget {
   final Item item;
   const ClaimSubmissionContent({super.key, required this.item});
 
   @override
-  State<ClaimSubmissionContent> createState() => _ClaimSubmissionContentState();
+  ConsumerState<ClaimSubmissionContent> createState() => _ClaimSubmissionContentState();
 }
 
-class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
+class _ClaimSubmissionContentState extends ConsumerState<ClaimSubmissionContent> {
   final TextEditingController _answerController = TextEditingController();
 
   @override
@@ -20,8 +23,8 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
     super.dispose();
   }
 
-  void _submitClaim() {
-    final id = widget.item.id;
+  Future<void> _submitClaim() async {
+    final itemId = widget.item.id;
     final answer = _answerController.text.trim();
     if (answer.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -30,18 +33,39 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
       return;
     }
 
-    final success = submitClaimForItem(id: id, answer: answer);
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incorrect verification answer.')),
-      );
-      return;
-    }
+    try {
+      final user = ref.read(userProvider);
+      if (user['id'] == null || user['id'].isEmpty) {
+        throw Exception('User not authenticated');
+      }
 
-    Navigator.pop(context, true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Claim submitted successfully.')),
-    );
+      final newClaim = Claim(
+        id: '', // Backend generated
+        itemId: itemId,
+        claimantId: user['id'],
+        answerAttempt: answer,
+        title: widget.item.title,
+        description: widget.item.description,
+        status: ClaimStatus.pending,
+        category: widget.item.category,
+        location: widget.item.location,
+        imageUrl: widget.item.imageUrl,
+        date: DateTime.now(),
+      );
+
+      await ref.read(claimProvider.notifier).addClaim(newClaim);
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Claim submitted successfully.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit claim: $e')),
+      );
+    }
   }
 
   @override
@@ -49,10 +73,11 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
     final theme = Theme.of(context);
     final imageUrl = widget.item.imageUrl ?? '';
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
               "Claim Management",
@@ -90,7 +115,7 @@ class _ClaimSubmissionContentState extends State<ClaimSubmissionContent> {
               controller: _answerController,
               decoration: const InputDecoration(hintText: "Your answer..."),
             ),
-            const Spacer(),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

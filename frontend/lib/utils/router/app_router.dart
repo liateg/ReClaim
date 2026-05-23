@@ -13,6 +13,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/claims/presentation/screens/claim_detail_screen.dart' as claims_detail;
 import '../../features/claims/presentation/screens/claim_empty.dart';
 import '../../features/claims/presentation/screens/claim_item_detail_screen.dart';
+import '../../features/claims/presentation/screens/claim_edit_screen.dart';
 import '../../features/claims/presentation/screens/claim_screen.dart' as claims_pages;
 import '../../features/items/presentation/screens/admin_item_list_screen.dart';
 import '../../features/items/presentation/screens/claim_item_screen.dart' as item_discovery;
@@ -64,7 +65,7 @@ final GoRouter appRouter = GoRouter(
               path: ':id',
               builder: (context, state) {
                 final id = state.pathParameters['id']!;
-                return item_pages.ClaimDetailScreen(claimId: id);
+                return item_pages.ItemDetailScreen(itemId: id);
               },
             ),
           ],
@@ -92,6 +93,13 @@ final GoRouter appRouter = GoRouter(
                 return claims_detail.ClaimDetailScreen(claimId: id);
               },
               routes: [
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id']!;
+                    return ClaimEditScreen(claimId: id);
+                  },
+                ),
                 GoRoute(
                   path: 'item/:itemId',
                   builder: (context, state) {

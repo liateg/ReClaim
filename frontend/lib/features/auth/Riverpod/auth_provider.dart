@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/api/dio_client.dart';
 import '../../../core/session/services/auth_service.dart';
 import '../../../core/session/app_session.dart';
 
-final authServiceProvider = Provider((ref) => AuthService());
+final authServiceProvider = Provider((ref) {
+  final dio = ref.watch(dioClientProvider);
+  return AuthService(dio);
+});
 
 final authProvider = FutureProvider<bool>((ref) async {
   return await AppSession.isLoggedIn();
@@ -10,27 +14,37 @@ final authProvider = FutureProvider<bool>((ref) async {
 
 final loginProvider =
     FutureProvider.family<void, Map<String, String>>((ref, data) async {
-  final service = ref.read(authServiceProvider);
-  final response = await service.login(data['email']!, data['password']!);
+  try {
+    final service = ref.read(authServiceProvider);
+    final response = await service.login(data['email']!, data['password']!);
 
-  print('Login response: $response');
-  print('User role from backend: ${response['user']['role']}');
+    print('DEBUG: Login response received: $response');
+    
+    if (response['user'] == null) {
+      throw Exception('User data missing in response');
+    }
 
-  await AppSession.signIn(
-    role: response['user']['role'] == 'admin'
-        ? AppUserRole.admin
-        : AppUserRole.user,
-    email: response['user']['email'],
-    displayName: response['user']['full_name'],
-  );
+    await AppSession.signIn(
+      role: response['user']['role'] == 'admin'
+          ? AppUserRole.admin
+          : AppUserRole.user,
+      email: response['user']['email'] ?? '',
+      displayName: response['user']['full_name'] ?? 'User',
+      id: response['user']['id']?.toString() ?? '0',
+    );
 
-  await AppSession.saveToken(response['accessToken']);
-  ref.invalidate(authProvider);
-  ref.invalidate(isAdminProvider);
-  ref.invalidate(currentUserRoleProvider);
-  ref.invalidate(userNameProvider);
-  ref.invalidate(userEmailProvider);
-  print('After sign in - AppSession.isAdmin: ${AppSession.isAdmin}');
+    print('DEBUG: AppSession.signIn completed');
+    await AppSession.saveToken(response['accessToken'] ?? '');
+    
+    ref.invalidate(authProvider);
+    ref.invalidate(userProvider);
+    ref.invalidate(isAdminProvider);
+    print('DEBUG: All providers invalidated');
+  } catch (e, stack) {
+    print('DEBUG: Login Error in Provider: $e');
+    print('DEBUG: Stack trace: $stack');
+    rethrow;
+  }
 });
 
 final registerProvider =
@@ -47,10 +61,12 @@ final registerProvider =
     role: AppUserRole.user,
     email: response['user']['email'],
     displayName: response['user']['full_name'],
+    id: response['user']['id'].toString(),
   );
 
   await AppSession.saveToken(response['accessToken']);
   ref.invalidate(authProvider);
+  ref.invalidate(userProvider);
   ref.invalidate(isAdminProvider);
   ref.invalidate(currentUserRoleProvider);
   ref.invalidate(userNameProvider);
@@ -69,12 +85,22 @@ final logoutProvider = FutureProvider<void>((ref) async {
 
   // Invalidate all auth providers
   ref.invalidate(authProvider);
+  ref.invalidate(userProvider);
   ref.invalidate(isAdminProvider);
   ref.invalidate(currentUserRoleProvider);
   ref.invalidate(userNameProvider);
   ref.invalidate(userEmailProvider);
 
   print('Logout complete');
+});
+
+final userProvider = Provider<Map<String, dynamic>>((ref) {
+  return {
+    'id': AppSession.id,
+    'email': AppSession.email,
+    'full_name': AppSession.displayName,
+    'role': AppSession.role.name,
+  };
 });
 
 final isAdminProvider = Provider<bool>((ref) {

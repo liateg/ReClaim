@@ -5,6 +5,7 @@ import 'package:frontend/shared/widgets/appbar.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+import 'package:frontend/features/claims/enum/claim_status.dart';
 import '../widgets/claim_image_preview.dart';
 
 class ClaimDetailScreen extends ConsumerWidget {
@@ -59,15 +60,22 @@ class ClaimDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      IconButton(
+                        onPressed: () => context.go('/claims/${claim.id}/edit'),
+                        icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryGreen),
+                      ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: isApproved
+                          color: claim.status == ClaimStatus.approved
                               ? AppTheme.statusApprovedLight
-                              : AppTheme.statusPendingLight,
+                              : claim.status == ClaimStatus.withdrawn
+                                  ? Colors.grey.shade200
+                                  : AppTheme.statusPendingLight,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -75,9 +83,11 @@ class ClaimDetailScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isApproved
+                            color: claim.status == ClaimStatus.approved
                                 ? AppTheme.primaryGreen
-                                : Colors.orange,
+                                : claim.status == ClaimStatus.withdrawn
+                                    ? Colors.grey.shade700
+                                    : Colors.orange,
                           ),
                         ),
                       ),
@@ -187,26 +197,73 @@ class ClaimDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.go('/claims/$claimId/item/item-123');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            final success = await ref.read(claimProvider.notifier).withdrawClaim(claimId);
+                            if (success && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Claim withdrawn')),
+                              );
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.orange),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text(
+                            "Withdraw",
+                            style: TextStyle(color: Colors.orange),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text(
-                        "[DEV] View Matching Item",
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Claim'),
+                                content: const Text('Are you sure you want to delete this claim?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              final success = await ref.read(claimProvider.notifier).deleteClaim(claimId);
+                              if (success && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Claim deleted')),
+                                );
+                                context.go('/claims');
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text(
+                            "Delete",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
