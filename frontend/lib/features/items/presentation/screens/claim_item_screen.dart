@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
+import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/features/items/presentation/widgets/item_card.dart';
 import 'package:frontend/features/items/presentation/widgets/discovery_top_bar.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
@@ -78,8 +78,7 @@ class _ClaimsScreenState extends ConsumerState<ClaimsScreen> {
                 CategoryChip(
                   label: 'Documents',
                   isSelected: _selectedCategory == 'Documents',
-                  onTap: () =>
-                      setState(() => _selectedCategory = 'Documents'),
+                  onTap: () => setState(() => _selectedCategory = 'Documents'),
                 ),
               ],
             ),
@@ -92,7 +91,8 @@ class _ClaimsScreenState extends ConsumerState<ClaimsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                    const Icon(Icons.error_outline,
+                        size: 48, color: Colors.grey),
                     const SizedBox(height: 12),
                     Text('Failed to load items: $error'),
                     TextButton(

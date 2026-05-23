@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
+import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -227,8 +227,7 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
                     value: 'Electronics', child: Text('Electronics')),
                 DropdownMenuItem(
                     value: 'Accessories', child: Text('Accessories')),
-                DropdownMenuItem(
-                    value: 'Documents', child: Text('Documents')),
+                DropdownMenuItem(value: 'Documents', child: Text('Documents')),
                 DropdownMenuItem(value: 'Other', child: Text('Other')),
               ],
               onChanged: _isSubmitting

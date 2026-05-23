@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
+import 'package:frontend/features/items/Riverpod/items_provider.dart';
 
 class ClaimSubmissionContent extends ConsumerStatefulWidget {
   final Map<String, dynamic> item;

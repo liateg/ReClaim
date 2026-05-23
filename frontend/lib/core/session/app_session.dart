@@ -95,5 +95,5 @@ class AppSession {
     return '';
   }
 
-  static const String institutionHintHost = 'http://localhost:3000';
+  static const String institutionHintHost = 'http://10.0.2.2:3000';
 }

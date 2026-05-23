@@ -2,28 +2,28 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/items_repository_impl.dart';
-import '../../domain/repositories/items_repository.dart';
+import '../data/items_service.dart';
 
-final itemsRepositoryProvider = Provider<ItemsRepository>((ref) {
-  return ItemsRepositoryImpl();
+final itemsServiceProvider = Provider<ItemsService>((ref) {
+  return ItemsService();
 });
 
-final itemsListProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final items = await ref.read(itemsRepositoryProvider).getItems();
+final itemsListProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final items = await ref.read(itemsServiceProvider).getItems();
   return items.map((item) => item.toMap()).toList();
 });
 
 /// My Posts tab — items posted by the current user.
 final myItemsListProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final items = await ref.read(itemsRepositoryProvider).getMyPostedItems();
+  final items = await ref.read(itemsServiceProvider).getMyPostedItems();
   return items.map((item) => item.toMap()).toList();
 });
 
 final itemByIdProvider =
     FutureProvider.family<Map<String, dynamic>?, String>((ref, id) async {
-  final item = await ref.read(itemsRepositoryProvider).getItemById(id);
+  final item = await ref.read(itemsServiceProvider).getItemById(id);
   return item?.toMap();
 });
 
@@ -50,7 +50,7 @@ typedef CreateItemParams = ({
 
 final createItemProvider = FutureProvider.autoDispose
     .family<void, CreateItemParams>((ref, params) async {
-  await ref.read(itemsRepositoryProvider).createItem(
+  await ref.read(itemsServiceProvider).createItem(
         title: params.title,
         location: params.location,
         description: params.description,
@@ -78,7 +78,7 @@ typedef UpdateItemParams = ({
 
 final updateItemProvider = FutureProvider.autoDispose
     .family<bool, UpdateItemParams>((ref, params) async {
-  return ref.read(itemsRepositoryProvider).updateItem(
+  return ref.read(itemsServiceProvider).updateItem(
         id: params.id,
         title: params.title,
         location: params.location,
@@ -94,7 +94,7 @@ final updateItemProvider = FutureProvider.autoDispose
 
 final deleteItemProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, id) async {
-  return ref.read(itemsRepositoryProvider).deleteItem(id);
+  return ref.read(itemsServiceProvider).deleteItem(id);
 });
 
 typedef SubmitClaimParams = ({
@@ -104,8 +104,8 @@ typedef SubmitClaimParams = ({
 
 final submitClaimProvider = FutureProvider.autoDispose
     .family<bool, SubmitClaimParams>((ref, params) async {
-  await ref.read(itemsRepositoryProvider).submitClaim(
-        id: params.id,
+  await ref.read(itemsServiceProvider).submitClaim(
+        itemId: params.id,
         answer: params.answer,
       );
   return true;

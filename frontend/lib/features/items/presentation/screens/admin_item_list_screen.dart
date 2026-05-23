@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/presentation/screens/edit_item_screen.dart';
-import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
+import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:go_router/go_router.dart';
 
@@ -199,8 +199,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1B5E3E))),
-                const Text(
-                    "Managing your active traces and valued returns.",
+                const Text("Managing your active traces and valued returns.",
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 12),
                 TextField(
@@ -267,7 +266,8 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
     );
   }
 
-  Future<void> _openEditScreen(Map<String, dynamic> item, BuildContext context) async {
+  Future<void> _openEditScreen(
+      Map<String, dynamic> item, BuildContext context) async {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => EditItemScreen(item: item)),

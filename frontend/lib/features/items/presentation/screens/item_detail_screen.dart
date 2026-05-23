@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
+import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import '../widgets/claim_submission_content.dart';
 
 Widget _itemDetailImage(String? imageUrl) {
@@ -90,8 +90,7 @@ class ClaimDetailScreen extends ConsumerWidget {
                     await showModalBottomSheet<bool>(
                       context: context,
                       isScrollControlled: true,
-                      builder: (context) =>
-                          ClaimSubmissionContent(item: item),
+                      builder: (context) => ClaimSubmissionContent(item: item),
                     );
                   },
                   child: const Text("Claim This Item"),
