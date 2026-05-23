@@ -24,6 +24,36 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
+    // Listen for new notifications to show a SnackBar
+    ref.listen(notificationsProvider, (previous, next) {
+      if (next.hasValue && previous?.hasValue == true) {
+        final prevList = previous!.value!;
+        final nextList = next.value!;
+        if (nextList.length > prevList.length) {
+          final newNotif = nextList.first; // Newest is first due to backend sort
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF1B5E3E),
+              behavior: SnackBarBehavior.floating,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(newNotif.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(newNotif.message, style: const TextStyle(fontSize: 12)),
+                ],
+              ),
+              action: SnackBarAction(
+                label: 'VIEW',
+                textColor: Colors.white,
+                onPressed: () => _showNotifications(context, ref),
+              ),
+            ),
+          );
+        }
+      }
+    });
+
     return AppBar(
       title: Text(title),
       backgroundColor: Colors.white,

@@ -167,7 +167,7 @@ export const approveClaim = async (req: Request, res: Response) => {
   // Notify the user
   memoryStore.createNotification(
     claim.claimantId,
-    finalStatus === "approved" ? "Claim Approved! 🎉" : "Claim Update",
+    finalStatus === "approved" ? "Claim Approved! 🎉" : "Claim Rejected ❌",
     `Your claim for the item "${item.title}" has been ${finalStatus}. Note: ${finalReviewNote}`
   );
 

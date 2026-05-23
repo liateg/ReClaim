@@ -9,6 +9,14 @@ final notificationServiceProvider = Provider((ref) {
 
 final notificationsProvider = FutureProvider<List<NotificationModel>>((ref) async {
   final service = ref.read(notificationServiceProvider);
+  
+  // Refresh notifications every 30 seconds
+  final timer = Stream.periodic(const Duration(seconds: 30)).listen((_) {
+    ref.invalidateSelf();
+  });
+  
+  ref.onDispose(() => timer.cancel());
+
   return await service.getNotifications();
 });
 

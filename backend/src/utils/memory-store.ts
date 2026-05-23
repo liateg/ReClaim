@@ -92,7 +92,9 @@ class MemoryStore {
 
   // Notifications
   getNotificationsByUser(userId: number) {
-    return this.notifications.filter(n => n.userId === userId);
+    return this.notifications
+      .filter(n => n.userId === userId)
+      .sort((a, b) => b.id - a.id);
   }
   createNotification(userId: number, title: string, message: string) {
     const newNotif: Notification = {
