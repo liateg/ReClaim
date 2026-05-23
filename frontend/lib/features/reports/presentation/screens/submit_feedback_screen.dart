@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/models/report_model.dart';
 import '../../Riverpod/report_provider.dart';
 import 'feedback_submitted_success.dart';
 
@@ -31,8 +32,8 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
   static const Color kShadow = Color(0x0F1D1C18);
   static const Color kError = Color(0xFFD94040);
 
-  int _starRating = 0;
-  bool _starError = false;
+  ReportReason? _selectedReason;
+  bool _reasonError = false;
   bool _commentError = false;
   bool _isSubmitting = false;
 
@@ -68,19 +69,55 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
     return 'other';
   }
 
+  int? _parseId(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return null;
+    }
+    return int.tryParse(trimmed);
+  }
+
   Future<void> _onSubmit() async {
-    final bool noStar = _starRating == 0;
+    final bool noReason = _selectedReason == null;
     final bool noComment = _commentsController.text.trim().isEmpty;
+    final itemId = _parseId(widget.itemId);
+    final claimId = _parseId(widget.claimId);
 
     setState(() {
-      _starError = noStar;
+      _reasonError = noReason;
       _commentError = noComment;
     });
 
-    if (noStar || noComment) {
+    if (itemId == null && claimId == null) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Missing item or claim reference for this report.',
+                  style: _manrope(size: 14, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: kError,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (noReason || noComment) {
       final missing = <String>[];
-      if (noStar) missing.add('a star rating');
-      if (noComment) missing.add('your comments');
+      if (noReason) missing.add('a report reason');
+      if (noComment) missing.add('your description');
 
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,9 +149,9 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
     try {
       // Call Riverpod to create report
       await ref.read(createReportProvider({
-        'itemId': widget.itemId,
-        'claimId': widget.claimId,
-        'reason': _getReasonFromRating(_starRating),
+        'itemId': itemId,
+        'claimId': claimId,
+        'reason': _selectedReason!.name,
         'description': _commentsController.text.trim(),
       }).future);
 
@@ -153,10 +190,10 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
     }
   }
 
-  void _onStarTap(int index) {
+  void _onReasonChanged(ReportReason? value) {
     setState(() {
-      _starRating = index + 1;
-      _starError = false;
+      _selectedReason = value;
+      _reasonError = false;
     });
   }
 
@@ -183,9 +220,9 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 16),
-                      _buildItemCard(),
+                      _buildTargetSection(),
                       const SizedBox(height: 32),
-                      _buildStarSection(),
+                      _buildReasonSection(),
                       const SizedBox(height: 32),
                       _buildCommentsSection(),
                       const SizedBox(height: 32),
@@ -232,7 +269,7 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
               ),
               const SizedBox(width: 16),
               Text(
-                'Feedback & Ratings',
+                'Submit Report',
                 style: _manrope(
                   size: 20,
                   weight: FontWeight.w600,
@@ -259,10 +296,19 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
     );
   }
 
-  Widget _buildItemCard() {
+  String _buildTargetLabel() {
+    if (widget.claimId != null && widget.claimId!.trim().isNotEmpty) {
+      return 'Claim #${widget.claimId!.trim()}';
+    }
+    if (widget.itemId != null && widget.itemId!.trim().isNotEmpty) {
+      return 'Item #${widget.itemId!.trim()}';
+    }
+    return 'Unknown report target';
+  }
+
+  Widget _buildTargetSection() {
     return Container(
       width: double.infinity,
-      height: 125,
       padding: const EdgeInsets.all(16),
       decoration: ShapeDecoration(
         color: kCardBg,
@@ -295,21 +341,32 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 14,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: kInputBg,
-                    borderRadius: BorderRadius.circular(4),
+                Text(
+                  'Report target',
+                  style: _manrope(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: kTextBody,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  height: 14,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: kInputBg,
-                    borderRadius: BorderRadius.circular(4),
+                Text(
+                  _buildTargetLabel(),
+                  style: _manrope(
+                    size: 18,
+                    weight: FontWeight.w700,
+                    color: kTextDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.claimId != null
+                      ? 'You are reporting this claim. The signed-in user is used automatically by the backend.'
+                      : 'You are reporting this item. The signed-in user is used automatically by the backend.',
+                  style: _manrope(
+                    size: 13,
+                    color: kTextBody,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -320,24 +377,26 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
     );
   }
 
-  Widget _buildStarSection() {
+  Widget _buildReasonSection() {
+    final reasons = ReportReason.values;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Your Rating',
+              'Reason',
               style: _manrope(
                 size: 16,
                 weight: FontWeight.w600,
-                color: _starError ? kError : kTextDark,
+                color: _reasonError ? kError : kTextDark,
               ),
             ),
-            if (_starError) ...[
+            if (_reasonError) ...[
               const SizedBox(width: 8),
               Text(
-                '— Please select a rating',
+                '— Please select a reason',
                 style: _manrope(size: 13, color: kError),
               ),
             ],
@@ -346,31 +405,36 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
         const SizedBox(height: 12),
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: _starError
-              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
-              : EdgeInsets.zero,
-          decoration: _starError
-              ? BoxDecoration(
-                  border: Border.all(color: kError, width: 1.5),
-                  borderRadius: BorderRadius.circular(10),
-                  color: kError.withOpacity(0.05),
-                )
-              : const BoxDecoration(),
-          child: Row(
-            children: List.generate(5, (i) {
-              final filled = i < _starRating;
-              return GestureDetector(
-                onTap: () => _onStarTap(i),
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Icon(
-                    filled ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: filled ? kDarkGreen : (_starError ? kError : kHint),
-                    size: 38,
-                  ),
-                ),
-              );
-            }),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: kInputBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _reasonError ? kError : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<ReportReason>(
+              isExpanded: true,
+              value: _selectedReason,
+              hint: Text(
+                'Select a reason',
+                style: _manrope(size: 16, color: kHint),
+              ),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                  color: kTextBody),
+              items: reasons
+                  .map(
+                    (reason) => DropdownMenuItem<ReportReason>(
+                      value: reason,
+                      child: Text(reason.displayName,
+                          style: _manrope(size: 16, color: kTextDark)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _onReasonChanged,
+            ),
           ),
         ),
       ],
@@ -384,7 +448,7 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
         Row(
           children: [
             Text(
-              'Additional Comments',
+              'Description',
               style: _manrope(
                 size: 16,
                 weight: FontWeight.w600,
@@ -422,7 +486,7 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
             maxLines: 8,
             style: _manrope(size: 16, color: kTextBody),
             decoration: InputDecoration(
-              hintText: 'Share your experience... (Optional)',
+              hintText: 'Explain why you are reporting this...',
               hintStyle: _manrope(
                 size: 16,
                 color: _commentError ? kError.withOpacity(0.6) : kHint,

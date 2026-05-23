@@ -21,8 +21,8 @@ class ReportService {
 
   // Create a report (clears related caches)
   Future<Map<String, dynamic>> createReport({
-    required String? itemId,
-    required String? claimId,
+    required int? itemId,
+    required int? claimId,
     required String reason,
     String? description,
   }) async {
