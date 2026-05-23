@@ -5,7 +5,7 @@ class AuthService {
   final Dio _dio = Dio();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://10.0.2.2:3000';
   static String? _testToken;
 
   static void setTestToken(String? token) => _testToken = token;
