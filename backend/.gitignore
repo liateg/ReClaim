@@ -38,6 +38,9 @@ Thumbs.db
 # test coverage
 coverage/
 
+# uploaded item images
+uploads/
+
 # misc
 *.tgz
 

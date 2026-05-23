@@ -1,7 +1,12 @@
+import 'dart:typed_data';
+
 import '../entities/item.dart';
 
 abstract class ItemsRepository {
   Future<List<Item>> getItems();
+
+  /// Items posted by the signed-in user (My Posts tab).
+  Future<List<Item>> getMyPostedItems();
 
   Future<Item?> getItemById(String id);
 
@@ -12,7 +17,9 @@ abstract class ItemsRepository {
     required String verificationQuestion,
     required String verificationAnswer,
     String category,
-    String imageUrl,
+    String? imagePath,
+    Uint8List? imageBytes,
+    String? imageFileName,
   });
 
   Future<bool> updateItem({
@@ -24,7 +31,9 @@ abstract class ItemsRepository {
     String? verificationQuestion,
     String? verificationAnswer,
     String? status,
-    String? imageUrl,
+    String? imagePath,
+    Uint8List? imageBytes,
+    String? imageFileName,
   });
 
   Future<bool> deleteItem(String id);

@@ -117,6 +117,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
       final deleted = await ref.read(deleteItemProvider(id).future);
       if (!mounted) return;
       if (deleted) {
+        invalidateItemsState(ref, itemId: id);
         _showTopSuccessBanner('Deleted successfully');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -133,7 +134,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final itemsAsync = ref.watch(itemsListProvider);
+    final itemsAsync = ref.watch(myItemsListProvider);
 
     return Scaffold(
       appBar: CustomAppBar(title: "My Posts", back: false),
@@ -147,7 +148,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
               children: [
                 Text('Failed to load posts: $error'),
                 TextButton(
-                  onPressed: () => ref.invalidate(itemsListProvider),
+                  onPressed: () => ref.invalidate(myItemsListProvider),
                   child: const Text('Retry'),
                 ),
               ],
@@ -273,8 +274,34 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
     );
 
     if (changed == true && mounted) {
-      ref.invalidate(itemsListProvider);
+      ref.invalidate(myItemsListProvider);
     }
+  }
+
+  Widget _adminThumb(String? imageUrl) {
+    final url = imageUrl?.trim() ?? '';
+    if (url.isEmpty) {
+      return Container(
+        width: 70,
+        height: 70,
+        color: Colors.grey.shade200,
+        alignment: Alignment.center,
+        child: const Icon(Icons.image_not_supported, size: 20),
+      );
+    }
+    return Image.network(
+      url,
+      width: 70,
+      height: 70,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: 70,
+        height: 70,
+        color: Colors.grey.shade200,
+        alignment: Alignment.center,
+        child: const Icon(Icons.broken_image, size: 20),
+      ),
+    );
   }
 
   Widget _buildAdminCard(Map<String, dynamic> item, BuildContext context) {
@@ -286,9 +313,9 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
       child: Row(
         children: [
           ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(item['image_url'],
-                  width: 70, height: 70, fit: BoxFit.cover)),
+            borderRadius: BorderRadius.circular(12),
+            child: _adminThumb(item['image_url'] as String?),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

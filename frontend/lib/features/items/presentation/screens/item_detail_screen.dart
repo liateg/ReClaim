@@ -3,6 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
 import '../widgets/claim_submission_content.dart';
 
+Widget _itemDetailImage(String? imageUrl) {
+  final url = imageUrl?.trim() ?? '';
+  if (url.isEmpty) {
+    return Container(
+      height: 250,
+      width: double.infinity,
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+    );
+  }
+  return Image.network(
+    url,
+    height: 250,
+    width: double.infinity,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => Container(
+      height: 250,
+      width: double.infinity,
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Icon(Icons.broken_image, color: Colors.grey),
+    ),
+  );
+}
+
 class ClaimDetailScreen extends ConsumerWidget {
   final String claimId;
 
@@ -38,8 +64,7 @@ class ClaimDetailScreen extends ConsumerWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.network(item['image_url'],
-                    height: 250, fit: BoxFit.cover),
+                child: _itemDetailImage(item['image_url'] as String?),
               ),
               const SizedBox(height: 20),
               Text(

@@ -6,99 +6,98 @@ import '../../profile/data/profile_service.dart';
 final authServiceProvider = Provider((ref) => AuthService());
 
 final authProvider = FutureProvider<bool>((ref) async {
-  return await AppSession.isLoggedIn();
+  return AppSession.isLoggedIn();
 });
 
-final loginProvider =
-    FutureProvider.family<void, Map<String, String>>((ref, data) async {
-  final service = ref.read(authServiceProvider);
-  final response = await service.login(data['email']!, data['password']!);
+Map<String, dynamic> _parseUserMap(dynamic raw) {
+  if (raw is! Map) {
+    throw Exception('Invalid user data from server.');
+  }
+  return Map<String, dynamic>.from(raw);
+}
 
-  print('Login response: $response');
-  print('User role from backend: ${response['user']['role']}');
+String _userField(Map<String, dynamic> user, String snake, String camel) {
+  final value = user[snake] ?? user[camel];
+  return value?.toString() ?? '';
+}
+
+int? _userIdFromMap(Map<String, dynamic> user) {
+  final id = user['id'];
+  if (id is int) return id;
+  return int.tryParse(id?.toString() ?? '');
+}
+
+AppUserRole _roleFromUser(Map<String, dynamic> user) {
+  final role = _userField(user, 'role', 'role');
+  return role == 'admin' ? AppUserRole.admin : AppUserRole.user;
+}
+
+Future<void> persistAuthSession(Map<String, dynamic> response) async {
+  final user = _parseUserMap(response['user']);
+  final accessToken = response['accessToken']?.toString() ??
+      response['token']?.toString() ??
+      '';
+
+  if (accessToken.isEmpty) {
+    throw Exception('Server did not return an access token.');
+  }
 
   await AppSession.signIn(
-    role: response['user']['role'] == 'admin'
-        ? AppUserRole.admin
-        : AppUserRole.user,
-    email: response['user']['email'],
-    displayName: response['user']['full_name'],
+    role: _roleFromUser(user),
+    email: _userField(user, 'email', 'email'),
+    displayName: _userField(user, 'full_name', 'fullName'),
+    userId: _userIdFromMap(user),
   );
+  await AppSession.saveToken(accessToken);
 
-  await AppSession.saveToken(response['accessToken']);
-  // Seed profile cache with user data
   try {
     await ProfileService().setProfile(
-        response['user']['email'], Map<String, dynamic>.from(response['user']));
+      _userField(user, 'email', 'email'),
+      user,
+    );
   } catch (_) {}
+}
+
+/// Call from UI after login/register/logout — not from autoDispose providers.
+void invalidateAuthState(WidgetRef ref) {
   ref.invalidate(authProvider);
   ref.invalidate(isAdminProvider);
   ref.invalidate(currentUserRoleProvider);
   ref.invalidate(userNameProvider);
   ref.invalidate(userEmailProvider);
-  print('After sign in - AppSession.isAdmin: ${AppSession.isAdmin}');
+}
+
+final loginProvider = FutureProvider.autoDispose
+    .family<void, Map<String, String>>((ref, data) async {
+  final service = ref.read(authServiceProvider);
+  final response = await service.login(data['email']!, data['password']!);
+  await persistAuthSession(response);
 });
 
-final registerProvider =
-    FutureProvider.family<void, Map<String, String>>((ref, data) async {
+final registerProvider = FutureProvider.autoDispose
+    .family<void, Map<String, String>>((ref, data) async {
   final service = ref.read(authServiceProvider);
-
-  final fullName = data['fullName']!;
-  final email = data['email']!;
-  final password = data['password']!;
-
-  final response = await service.register(fullName, email, password);
-
-  AppSession.signIn(
-    role: AppUserRole.user,
-    email: response['user']['email'],
-    displayName: response['user']['full_name'],
+  final response = await service.register(
+    data['fullName']!,
+    data['email']!,
+    data['password']!,
   );
-
-  await AppSession.saveToken(response['accessToken']);
-  try {
-    await ProfileService().setProfile(
-        response['user']['email'], Map<String, dynamic>.from(response['user']));
-  } catch (_) {}
-  ref.invalidate(authProvider);
+  await persistAuthSession(response);
 });
 
-final logoutProvider = FutureProvider<void>((ref) async {
-  print('Logging out...');
+final logoutProvider = FutureProvider.autoDispose<void>((ref) async {
   final service = ref.read(authServiceProvider);
-
-  // capture current email to invalidate profile cache after sign out
   final currentEmail = AppSession.email;
 
-  // Call backend logout
   await service.logout();
-
-  // Clear local session
   await AppSession.signOut();
 
-  // Invalidate cached profile for the signed-out user
   try {
     await ProfileService().invalidateProfile(email: currentEmail);
   } catch (_) {}
-
-  // Invalidate all auth providers
-  ref.invalidate(authProvider);
-  ref.invalidate(isAdminProvider);
-  ref.invalidate(currentUserRoleProvider);
-  ref.invalidate(userNameProvider);
-  ref.invalidate(userEmailProvider);
-
-  print('Logout complete');
 });
 
-final isAdminProvider = Provider<bool>((ref) {
-  final result = AppSession.isAdmin;
-  print('isAdminProvider returning: $result');
-  return result;
-});
-final currentUserRoleProvider = Provider<AppUserRole?>((ref) {
-  print('Current role from AppSession: ${AppSession.role}'); // Debug
-  return AppSession.role;
-});
+final isAdminProvider = Provider<bool>((ref) => AppSession.isAdmin);
+final currentUserRoleProvider = Provider<AppUserRole?>((ref) => AppSession.role);
 final userNameProvider = Provider<String>((ref) => AppSession.displayName);
 final userEmailProvider = Provider<String>((ref) => AppSession.email);

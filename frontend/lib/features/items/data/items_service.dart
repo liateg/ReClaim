@@ -72,7 +72,14 @@ class ItemsService {
 
   /// Invalidate list and single item caches when mutations occur.
   Future<void> invalidateItemCache({String? id}) async {
-    await _cache.delete('items:list');
-    if (id != null) await _cache.delete('items:$id');
+    try {
+      await _cache.delete('items:list');
+      if (id != null) await _cache.delete('items:$id');
+    } catch (e) {
+      // Cache is best-effort. Do not let cache failures bubble to UI.
+      // Log for diagnostics but continue.
+      // ignore: avoid_print
+      print('Warning: failed to invalidate item cache: $e');
+    }
   }
 }

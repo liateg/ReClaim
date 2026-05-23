@@ -21,6 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   String? _generalError;
+  bool _isSubmitting = false;
 
   void _handleSignIn() async {
     setState(() {
@@ -49,20 +50,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    await ref.read(loginProvider({
-      'email': _emailController.text,
-      'password': _passwordController.text,
-    }).future);
+    setState(() => _isSubmitting = true);
+    try {
+      final params = {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      };
+      ref.invalidate(loginProvider(params));
+      await ref.read(loginProvider(params).future);
 
-    final isLoggedIn = await ref.read(authProvider.future);
+      if (!mounted) return;
 
-    final isAdmin = ref.read(isAdminProvider);
+      invalidateAuthState(ref);
+      final isLoggedIn = await ref.read(authProvider.future);
+      final isAdmin = ref.read(isAdminProvider);
 
-    if (isLoggedIn) {
+      if (!isLoggedIn) {
+        setState(() {
+          _generalError =
+              'Sign-in completed but session was not saved. Please try again.';
+        });
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('Welcome back, ${_emailController.text.split('@')[0]}!'),
+          content: Text(
+              'Welcome back, ${_emailController.text.split('@')[0]}!'),
           backgroundColor: AppTheme.primaryGreenLight,
         ),
       );
@@ -72,11 +86,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else {
         context.go(RoutePaths.home);
       }
-    } else {
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '');
       setState(() {
-        _generalError = 'Invalid email or password. Please try again.';
-        _passwordError = 'Incorrect password';
+        _generalError = message;
+        if (message.toLowerCase().contains('password') ||
+            message.toLowerCase().contains('invalid email')) {
+          _passwordError = message;
+        }
       });
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -94,8 +115,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
@@ -168,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 errorText: _passwordError,
               ),
               const SizedBox(height: 24),
-              authState.isLoading
+              _isSubmitting
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
                       text: 'Sign in',

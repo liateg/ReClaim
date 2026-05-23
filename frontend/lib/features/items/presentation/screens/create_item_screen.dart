@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/presentation/riverpod/items_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreateItemScreen extends ConsumerStatefulWidget {
   const CreateItemScreen({super.key});
@@ -18,8 +21,11 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
       TextEditingController();
   final TextEditingController _verificationAnswerController =
       TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
   String _selectedCategory = 'Electronics';
   bool _isSubmitting = false;
+  XFile? _pickedImage;
+  Uint8List? _pickedImageBytes;
 
   @override
   void dispose() {
@@ -29,6 +35,33 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
     _verificationQuestionController.dispose();
     _verificationAnswerController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final file = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      setState(() {
+        _pickedImage = file;
+        _pickedImageBytes = bytes;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Photo selected. It will upload when you post.'),
+          backgroundColor: Color(0xFF1B5E3E),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not pick image: $e')),
+      );
+    }
   }
 
   Future<void> _submitPost() async {
@@ -51,26 +84,38 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(
-        createItemProvider((
-          title: title,
-          location: location,
-          description: description,
-          verificationQuestion: verificationQuestion,
-          verificationAnswer: verificationAnswer,
-          category: _selectedCategory,
-        )).future,
+      final params = (
+        title: title,
+        location: location,
+        description: description,
+        verificationQuestion: verificationQuestion,
+        verificationAnswer: verificationAnswer,
+        category: _selectedCategory,
+        imagePath: _pickedImage?.path,
+        imageBytes: _pickedImageBytes,
+        imageFileName: _pickedImage?.name,
       );
+      await ref.read(createItemProvider(params).future);
+
+      if (!mounted) return;
+      invalidateItemsState(ref);
 
       _titleController.clear();
       _locationController.clear();
       _descriptionController.clear();
       _verificationQuestionController.clear();
       _verificationAnswerController.clear();
+      setState(() {
+        _pickedImage = null;
+        _pickedImageBytes = null;
+      });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item posted successfully.')),
+        const SnackBar(
+          content: Text('Item posted successfully.'),
+          backgroundColor: Color(0xFF1B5E3E),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -80,6 +125,39 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Widget _buildImagePreview() {
+    if (_pickedImageBytes != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.memory(
+          _pickedImageBytes!,
+          height: 150,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    return Container(
+      height: 150,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.upload_file, color: Colors.grey),
+          Text(
+            'Tap to select a photo',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -104,22 +182,9 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
               style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
             const SizedBox(height: 24),
-            Container(
-              height: 150,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.upload_file, color: Colors.grey),
-                  Text("Upload Item Image",
-                      style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              ),
+            GestureDetector(
+              onTap: _isSubmitting ? null : _pickImage,
+              child: _buildImagePreview(),
             ),
             const SizedBox(height: 20),
             _buildInputField(
@@ -166,10 +231,12 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
                     value: 'Documents', child: Text('Documents')),
                 DropdownMenuItem(value: 'Other', child: Text('Other')),
               ],
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _selectedCategory = value);
-              },
+              onChanged: _isSubmitting
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+                      setState(() => _selectedCategory = value);
+                    },
             ),
             const SizedBox(height: 16),
             _buildInputField(
@@ -230,6 +297,7 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
           TextField(
             controller: controller,
             maxLines: maxLines,
+            enabled: !_isSubmitting,
             decoration: InputDecoration(
               hintText: hint,
               filled: true,

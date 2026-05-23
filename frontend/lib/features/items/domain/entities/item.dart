@@ -36,7 +36,7 @@ class Item {
       dateFound: map[ItemModel.keyDate] as String? ?? '',
       verificationQuestion: map[ItemModel.keyQuestion] as String? ?? '',
       verificationAnswer: map[ItemModel.keyAnswer] as String? ?? '',
-      imageUrl: map[ItemModel.keyImage] as String? ?? ItemModel.placeholderImage,
+      imageUrl: map[ItemModel.keyImage] as String? ?? '',
     );
   }
 

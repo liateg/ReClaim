@@ -419,6 +419,28 @@ export const deleteItem = async (req: Request, res: Response) => {
   }
 };
 
+export const uploadItemImage = async (req: Request, res: Response) => {
+  const auth = getAuth(req);
+
+  try {
+    if (!auth) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const file = (req as Request & { file?: Express.Multer.File }).file;
+    if (!file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    return res.status(200).json({
+      imageUrl: `/uploads/${file.filename}`,
+    });
+  } catch (error) {
+    console.error("Error uploading item image:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const getAdminItems = async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(

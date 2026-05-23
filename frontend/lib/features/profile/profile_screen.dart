@@ -29,7 +29,10 @@ class ProfileScreen extends ConsumerWidget {
       builder: (ctx) => const _SignOutConfirmDialog(),
     );
     if (ok == true && context.mounted) {
+      ref.invalidate(logoutProvider);
       await ref.read(logoutProvider.future);
+      if (!context.mounted) return;
+      invalidateAuthState(ref);
       context.go(RoutePaths.login);
     }
   }

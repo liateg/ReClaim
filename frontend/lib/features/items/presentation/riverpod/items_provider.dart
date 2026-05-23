@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/items_repository_impl.dart';
@@ -12,14 +14,23 @@ final itemsListProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async
   return items.map((item) => item.toMap()).toList();
 });
 
+/// My Posts tab — items posted by the current user.
+final myItemsListProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final items = await ref.read(itemsRepositoryProvider).getMyPostedItems();
+  return items.map((item) => item.toMap()).toList();
+});
+
 final itemByIdProvider =
     FutureProvider.family<Map<String, dynamic>?, String>((ref, id) async {
   final item = await ref.read(itemsRepositoryProvider).getItemById(id);
   return item?.toMap();
 });
 
-void _invalidateItemsCache(Ref ref, {String? itemId}) {
+/// Refresh lists after create/update/delete/claim (call from UI, not autoDispose providers).
+void invalidateItemsState(WidgetRef ref, {String? itemId}) {
   ref.invalidate(itemsListProvider);
+  ref.invalidate(myItemsListProvider);
   if (itemId != null) {
     ref.invalidate(itemByIdProvider(itemId));
   }
@@ -32,10 +43,13 @@ typedef CreateItemParams = ({
   String verificationQuestion,
   String verificationAnswer,
   String category,
+  String? imagePath,
+  Uint8List? imageBytes,
+  String? imageFileName,
 });
 
-final createItemProvider =
-    FutureProvider.family<void, CreateItemParams>((ref, params) async {
+final createItemProvider = FutureProvider.autoDispose
+    .family<void, CreateItemParams>((ref, params) async {
   await ref.read(itemsRepositoryProvider).createItem(
         title: params.title,
         location: params.location,
@@ -43,8 +57,10 @@ final createItemProvider =
         verificationQuestion: params.verificationQuestion,
         verificationAnswer: params.verificationAnswer,
         category: params.category,
+        imagePath: params.imagePath,
+        imageBytes: params.imageBytes,
+        imageFileName: params.imageFileName,
       );
-  _invalidateItemsCache(ref);
 });
 
 typedef UpdateItemParams = ({
@@ -55,11 +71,14 @@ typedef UpdateItemParams = ({
   String category,
   String verificationQuestion,
   String verificationAnswer,
+  String? imagePath,
+  Uint8List? imageBytes,
+  String? imageFileName,
 });
 
-final updateItemProvider =
-    FutureProvider.family<bool, UpdateItemParams>((ref, params) async {
-  final updated = await ref.read(itemsRepositoryProvider).updateItem(
+final updateItemProvider = FutureProvider.autoDispose
+    .family<bool, UpdateItemParams>((ref, params) async {
+  return ref.read(itemsRepositoryProvider).updateItem(
         id: params.id,
         title: params.title,
         location: params.location,
@@ -67,15 +86,15 @@ final updateItemProvider =
         category: params.category,
         verificationQuestion: params.verificationQuestion,
         verificationAnswer: params.verificationAnswer,
+        imagePath: params.imagePath,
+        imageBytes: params.imageBytes,
+        imageFileName: params.imageFileName,
       );
-  _invalidateItemsCache(ref, itemId: params.id);
-  return updated;
 });
 
-final deleteItemProvider = FutureProvider.family<bool, String>((ref, id) async {
-  final deleted = await ref.read(itemsRepositoryProvider).deleteItem(id);
-  _invalidateItemsCache(ref, itemId: id);
-  return deleted;
+final deleteItemProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, id) async {
+  return ref.read(itemsRepositoryProvider).deleteItem(id);
 });
 
 typedef SubmitClaimParams = ({
@@ -83,12 +102,11 @@ typedef SubmitClaimParams = ({
   String answer,
 });
 
-final submitClaimProvider =
-    FutureProvider.family<bool, SubmitClaimParams>((ref, params) async {
-  final success = await ref.read(itemsRepositoryProvider).submitClaim(
+final submitClaimProvider = FutureProvider.autoDispose
+    .family<bool, SubmitClaimParams>((ref, params) async {
+  await ref.read(itemsRepositoryProvider).submitClaim(
         id: params.id,
         answer: params.answer,
       );
-  _invalidateItemsCache(ref, itemId: params.id);
-  return success;
+  return true;
 });

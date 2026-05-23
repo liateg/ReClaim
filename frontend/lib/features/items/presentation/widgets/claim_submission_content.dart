@@ -34,18 +34,12 @@ class _ClaimSubmissionContentState
 
     setState(() => _isSubmitting = true);
     try {
-      final success = await ref.read(
-        submitClaimProvider((id: id, answer: answer)).future,
-      );
+      final params = (id: id, answer: answer);
+      await ref.read(submitClaimProvider(params).future);
 
       if (!mounted) return;
-      if (!success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Incorrect verification answer.')),
-        );
-        return;
-      }
 
+      invalidateItemsState(ref, itemId: id);
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Claim submitted successfully.')),
@@ -63,7 +57,7 @@ class _ClaimSubmissionContentState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final imageUrl = (widget.item['image_url'] as String?) ?? '';
+    final imageUrl = (widget.item['image_url'] as String?)?.trim() ?? '';
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -81,19 +75,27 @@ class _ClaimSubmissionContentState
             const SizedBox(height: 14),
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.network(
-                imageUrl,
-                height: 120,
-                width: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 120,
-                  width: 120,
-                  color: Colors.grey.shade200,
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.image_not_supported),
-                ),
-              ),
+              child: imageUrl.isEmpty
+                  ? Container(
+                      height: 120,
+                      width: 120,
+                      color: Colors.grey.shade200,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.image_not_supported),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      height: 120,
+                      width: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 120,
+                        width: 120,
+                        color: Colors.grey.shade200,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.broken_image),
+                      ),
+                    ),
             ),
             const SizedBox(height: 16),
             _infoBox(theme, widget.item),
