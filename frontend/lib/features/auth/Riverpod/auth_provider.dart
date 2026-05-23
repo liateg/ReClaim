@@ -62,8 +62,14 @@ final logoutProvider = FutureProvider.autoDispose<void>((ref) async {
   try {
     await ProfileService().invalidateProfile(email: currentEmail);
   } catch (_) {}
+  if (ref.mounted) {
+    ref.invalidate(authProvider);
+    ref.invalidate(isAdminProvider);
+    ref.invalidate(currentUserRoleProvider);
+    ref.invalidate(userNameProvider);
+    ref.invalidate(userEmailProvider);
+  }
 
-  invalidateAuthState(ref);
 });
 
 final isAdminProvider = Provider<bool>((ref) => AppSession.isAdmin);

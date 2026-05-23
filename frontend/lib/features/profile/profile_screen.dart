@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/session/app_session.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
+import 'package:frontend/features/profile/Riverpod/profile_provider.dart';
 import 'package:frontend/utils/router/route_paths.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:frontend/features/auth/riverpod/auth_provider.dart';
@@ -42,8 +43,8 @@ class ProfileScreen extends ConsumerWidget {
     ref.watch(authProvider);
 
     final isAdmin = ref.watch(isAdminProvider);
-    final displayName = ref.watch(userNameProvider);
-    final email = ref.watch(userEmailProvider);
+    final profileAsync = ref.watch(profileOverviewProvider);
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: CustomAppBar(
@@ -55,80 +56,119 @@ class ProfileScreen extends ConsumerWidget {
           onPressed: () => _goBack(context, ref),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        children: [
-          const SizedBox(height: 8),
-          _AvatarBlock(
-            initials: _initials(displayName),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            displayName.isEmpty ? 'Guest' : displayName,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
+      body: profileAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => ListView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+          children: [
+            const SizedBox(height: 24),
+            const Icon(Icons.person_off_outlined,
+                size: 56, color: AppTheme.grayText),
+            const SizedBox(height: 12),
+            Text(
+              'Failed to load profile: $error',
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            email.isEmpty ? '—' : email,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.grayText,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (isAdmin) ...[
-            _RoleBadge(label: 'INSTITUTION ADMIN'),
-            const SizedBox(height: 20),
-            _InstitutionCard(
-              name: AppSession.institutionName,
-              subtitle: AppSession.institutionDepartment,
-            ),
-            const SizedBox(height: 28),
-            _sectionLabel('ADMINISTRATION & SECURITY'),
-            const SizedBox(height: 10),
-            _AdminSignOutTile(
-              emailHint: email,
-              onTap: () => _confirmSignOut(context, ref),
-            ),
-          ] else ...[
-            const SizedBox(height: 8),
-            Row(
-              children: const [
-                Expanded(child: _StatCard(value: '12', label: 'POSTS')),
-                SizedBox(width: 12),
-                Expanded(child: _StatCard(value: '08', label: 'REPORTS')),
-              ],
-            ),
-            const SizedBox(height: 28),
-            _sectionLabel('ACCOUNT OVERVIEW'),
-            const SizedBox(height: 10),
-            _AccountCard(
-              children: [
-                _AccountTile(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'My Posts',
-                  onTap: () => context.go(RoutePaths.items),
-                ),
-                const Divider(height: 1),
-                _AccountTile(
-                  icon: Icons.flag_outlined,
-                  title: 'My Reports',
-                  onTap: () => context.push(RoutePaths.reports),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _UserLogoutButton(
-              onPressed: () => _confirmSignOut(context, ref),
+            const SizedBox(height: 16),
+            Center(
+              child: ElevatedButton(
+                onPressed: () => ref.invalidate(profileOverviewProvider),
+                child: const Text('Retry'),
+              ),
             ),
           ],
-        ],
+        ),
+        data: (overview) {
+          final profile = overview.profile;
+          final displayName = profile.name;
+          final email = profile.email;
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            children: [
+              const SizedBox(height: 8),
+              _AvatarBlock(
+                initials: _initials(displayName),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                displayName.isEmpty ? 'Guest' : displayName,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                email.isEmpty ? '—' : email,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.grayText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (isAdmin) ...[
+                _RoleBadge(label: 'INSTITUTION ADMIN'),
+                const SizedBox(height: 20),
+                _InstitutionCard(
+                  name: AppSession.institutionName,
+                  subtitle: AppSession.institutionDepartment,
+                ),
+                const SizedBox(height: 28),
+                _sectionLabel('ADMINISTRATION & SECURITY'),
+                const SizedBox(height: 10),
+                _AdminSignOutTile(
+                  emailHint: email,
+                  onTap: () => _confirmSignOut(context, ref),
+                ),
+              ] else ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        value: overview.postsCount.toString().padLeft(2, '0'),
+                        label: 'POSTS',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        value: overview.reportsCount.toString().padLeft(2, '0'),
+                        label: 'REPORTS',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                _sectionLabel('ACCOUNT OVERVIEW'),
+                const SizedBox(height: 10),
+                _AccountCard(
+                  children: [
+                    _AccountTile(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'My Posts',
+                      onTap: () => context.go(RoutePaths.items),
+                    ),
+                    const Divider(height: 1),
+                    _AccountTile(
+                      icon: Icons.flag_outlined,
+                      title: 'My Reports',
+                      onTap: () => context.push(RoutePaths.reports),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _UserLogoutButton(
+                  onPressed: () => _confirmSignOut(context, ref),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
