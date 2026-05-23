@@ -10,33 +10,34 @@ final authProvider = FutureProvider<bool>((ref) async {
 });
 
 final loginProvider =
-    FutureProvider.family<void, Map<String, String>>((ref, data) async {
+    FutureProvider.family<AsyncValue<void>, Map<String, String>>(
+        (ref, data) async {
   final service = ref.read(authServiceProvider);
-  final response = await service.login(data['email']!, data['password']!);
 
-  print('Login response: $response');
-  print('User role from backend: ${response['user']['role']}');
-
-  await AppSession.signIn(
-    role: response['user']['role'] == 'admin'
-        ? AppUserRole.admin
-        : AppUserRole.user,
-    email: response['user']['email'],
-    displayName: response['user']['full_name'],
-  );
-
-  await AppSession.saveToken(response['accessToken']);
-  // Seed profile cache with user data
   try {
-    await ProfileService().setProfile(
-        response['user']['email'], Map<String, dynamic>.from(response['user']));
-  } catch (_) {}
-  ref.invalidate(authProvider);
-  ref.invalidate(isAdminProvider);
-  ref.invalidate(currentUserRoleProvider);
-  ref.invalidate(userNameProvider);
-  ref.invalidate(userEmailProvider);
-  print('After sign in - AppSession.isAdmin: ${AppSession.isAdmin}');
+    final response = await service.login(data['email']!, data['password']!);
+
+    await AppSession.signIn(
+      role: response['user']['role'] == 'admin'
+          ? AppUserRole.admin
+          : AppUserRole.user,
+      email: response['user']['email'],
+      displayName: response['user']['full_name'],
+    );
+
+    await AppSession.saveToken(response['accessToken']);
+
+    ref.invalidate(authProvider);
+    ref.invalidate(isAdminProvider);
+    ref.invalidate(currentUserRoleProvider);
+    ref.invalidate(userNameProvider);
+    ref.invalidate(userEmailProvider);
+
+    return const AsyncValue.data(null);
+  } catch (e) {
+    print('Login provider error: $e');
+    return AsyncValue.error(e, StackTrace.current);
+  }
 });
 
 final registerProvider =

@@ -29,7 +29,14 @@ class AuthService {
 
       return response.data;
     } catch (e) {
-      throw Exception('Login failed');
+      print('Login error in service: $e');
+      if (e is DioException) {
+        // ✅ Extract actual error message from backend
+        final errorMsg = e.response?.data['message'] ?? 'Login failed';
+        print('Backend error message: $errorMsg');
+        throw Exception(errorMsg);
+      }
+      throw Exception('Login failed. Please check your connection.');
     }
   }
 
@@ -51,6 +58,8 @@ class AuthService {
       if (e is DioException) {
         print('Dio error response: ${e.response?.data}');
         print('Dio error status: ${e.response?.statusCode}');
+        final errorMsg = e.response?.data['message'] ?? 'Registration failed';
+        throw Exception(errorMsg);
       }
       rethrow;
     }
