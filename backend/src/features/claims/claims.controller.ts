@@ -60,9 +60,12 @@ export const getClaims = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Authentication required" });
   }
 
+  console.log(`DEBUG: GET /claims requested by user ${auth.id} (role: ${auth.role})`);
   const claims = auth.role === "admin"
     ? memoryStore.getClaims()
     : memoryStore.getClaimsByUser(auth.id);
+    
+  console.log(`DEBUG: Found ${claims.length} claims for user ${auth.id}`);
 
   // Enrich each claim with item data so the frontend can display title, image etc.
   const enriched = claims.map(claim => {
@@ -182,20 +185,27 @@ export const deleteClaim = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Authentication required" });
   }
 
+  console.log(`DEBUG: DELETE request received for claim ID: ${id}`);
+  const allClaims = memoryStore.getClaims();
+  console.log(`DEBUG: Current claims in store: ${JSON.stringify(allClaims.map(c => c.id))}`);
+
   const claim = memoryStore.getClaimById(Number(id));
   if (!claim) {
+    console.log(`DEBUG: Claim with ID ${id} not found in store.`);
     return res.status(404).json({ message: "Claim not found" });
   }
 
   if (auth.role !== "admin" && claim.claimantId !== auth.id) {
+    console.log(`DEBUG: Access denied for claim ${id}. Claimant: ${claim.claimantId}, Requester: ${auth.id}`);
     return res.status(403).json({ message: "Access denied" });
   }
 
-  console.log(`DEBUG: Attempting to delete claim with ID: ${id} (converted to: ${Number(id)})`);
   const success = memoryStore.deleteClaim(Number(id));
   if (!success) {
-    console.log(`DEBUG: Claim ${id} not found in store.`);
-    return res.status(404).json({ message: `Claim ${id} not found` });
+    console.log(`DEBUG: memoryStore.deleteClaim failed for ID ${id}.`);
+    return res.status(404).json({ message: `Claim ${id} not found during deletion` });
   }
+  
+  console.log(`DEBUG: Claim ${id} deleted successfully.`);
   return res.status(200).json({ message: "Claim deleted successfully" });
 };

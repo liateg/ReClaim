@@ -21,6 +21,10 @@ class ClaimsScreen extends ConsumerStatefulWidget {
 class _ClaimsScreenState extends ConsumerState<ClaimsScreen> {
   String _selectedStatus = 'All';
 
+  Future<void> _onRefresh() async {
+    await ref.read(claimProvider.notifier).loadClaims();
+  }
+
   @override
   Widget build(BuildContext context) {
     final claimState = ref.watch(claimProvider);
@@ -73,47 +77,59 @@ class _ClaimsScreenState extends ConsumerState<ClaimsScreen> {
           const SizedBox(height: 8),
 
           Expanded(
-            child: filteredClaims.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No $_selectedStatus claims found.',
-                          style: const TextStyle(color: Colors.grey),
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: filteredClaims.isEmpty
+                  ? Center(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No $_selectedStatus claims found.',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Pull down to refresh',
+                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                    )
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      itemCount: filteredClaims.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final claimObj = filteredClaims[index];
+                        final isPending = claimObj.status.name.toLowerCase() == 'pending';
+                        
+                        return ClaimCard(
+                          claim: claimObj,
+                          onWithdraw: () async {
+                            if (isPending) {
+                              final confirmed = await showClaimWithdrawDialog(context);
+                              if (confirmed) {
+                                await ref.read(claimProvider.notifier).withdrawClaim(claimObj.id);
+                              }
+                            } else {
+                              final confirmed = await showClaimDeleteDialog(context);
+                              if (confirmed) {
+                                await ref.read(claimProvider.notifier).removeClaim(claimObj.id);
+                              }
+                            }
+                          },
+                          onTap: () => context.go('/claims/${claimObj.id}'),
+                        );
+                      },
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                    itemCount: filteredClaims.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final claimObj = filteredClaims[index];
-                      final isPending = claimObj.status.name.toLowerCase() == 'pending';
-
-                      return ClaimCard(
-                        claim: claimObj,
-                        onWithdraw: () async {
-                          if (isPending) {
-                            final confirmed = await showClaimWithdrawDialog(context);
-                            if (confirmed) {
-                              await ref.read(claimProvider.notifier).withdrawClaim(claimObj.id);
-                            }
-                          } else {
-                            final confirmed = await showClaimDeleteDialog(context);
-                            if (confirmed) {
-                              await ref.read(claimProvider.notifier).removeClaim(claimObj.id);
-                            }
-                          }
-                        },
-                        onTap: () => context.go('/claims/${claimObj.id}'),
-                      );
-                    },
-                  ),
+            ),
           ),
         ],
       ),
