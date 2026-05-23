@@ -200,7 +200,7 @@ class _SignOutConfirmDialog extends StatelessWidget {
                 ),
                 onPressed: () => Navigator.of(context).pop(true),
                 child: const Text(
-                  'Sign Out Now',
+                  'Log Out Now',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -387,7 +387,7 @@ class _AdminSignOutTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sign Out',
+                      'Log Out',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: Colors.red.shade700,

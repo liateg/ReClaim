@@ -102,7 +102,7 @@ void main() {
       expect(reportsList, isNotEmpty);
 
       final first = Map<String, dynamic>.from(reportsList.first as Map);
-      final reportModel = ReportModel.fromJson(first);
+      final reportModel = Report.fromJson(first);
       print(
           'Mapped first report: id=${reportModel.id}, reason=${reportModel.reason}, status=${reportModel.status}');
       expect(reportModel.id, isNotNull);

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import '../../data/mock/mock_claims.dart';
+import '../../../reports/presentation/screens/submit_feedback_screen.dart';
 
 class ClaimDetailScreen extends StatelessWidget {
   final String claimId;
@@ -28,7 +29,6 @@ class ClaimDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-           
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(20),
@@ -48,16 +48,12 @@ class ClaimDetailScreen extends StatelessWidget {
                     : Image.network(claim.imageUrl!, fit: BoxFit.cover),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -95,10 +91,7 @@ class ClaimDetailScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
-                 
                   Text(
                     claim.description,
                     style: const TextStyle(
@@ -107,10 +100,7 @@ class ClaimDetailScreen extends StatelessWidget {
                       color: AppTheme.descriptionText,
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
-                
                   const Text(
                     "REPORT ID",
                     style: TextStyle(
@@ -125,7 +115,6 @@ class ClaimDetailScreen extends StatelessWidget {
                     "#RC-992-8810",
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
-
                   if (isApproved) ...[
                     const SizedBox(height: 20),
                     const Text(
@@ -151,15 +140,12 @@ class ClaimDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-
                   const SizedBox(height: 25),
-
-               
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: AppTheme.feedbackCardBackground,
+                      color: const Color(0xFFE6E2DB),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -191,7 +177,14 @@ class ClaimDetailScreen extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => SubmitFeedbackScreen(
+                                            claimId: claimId,
+                                          )));
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryGreen,
                               shape: RoundedRectangleBorder(
@@ -208,31 +201,27 @@ class ClaimDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.go('/claims/$claimId/item/item-123');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        "[DEV] View Matching Item",
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: ElevatedButton(
+                  //     onPressed: () {
+                  //       context.go('/claims/$claimId/item/item-123');
+                  //     },
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: Colors.orange,
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //       padding: const EdgeInsets.symmetric(vertical: 12),
+                  //     ),
+                  //     child: const Text(
+                  //       "[DEV] View Matching Item",
+                  //       style: TextStyle(color: Colors.white, fontSize: 12),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 20),
                 ],
               ),
             ),

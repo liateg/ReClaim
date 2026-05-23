@@ -9,69 +9,35 @@ final authProvider = FutureProvider<bool>((ref) async {
   return AppSession.isLoggedIn();
 });
 
-Map<String, dynamic> _parseUserMap(dynamic raw) {
-  if (raw is! Map) {
-    throw Exception('Invalid user data from server.');
-  }
-  return Map<String, dynamic>.from(raw);
-}
-
-String _userField(Map<String, dynamic> user, String snake, String camel) {
-  final value = user[snake] ?? user[camel];
-  return value?.toString() ?? '';
-}
-
-int? _userIdFromMap(Map<String, dynamic> user) {
-  final id = user['id'];
-  if (id is int) return id;
-  return int.tryParse(id?.toString() ?? '');
-}
-
-AppUserRole _roleFromUser(Map<String, dynamic> user) {
-  final role = _userField(user, 'role', 'role');
-  return role == 'admin' ? AppUserRole.admin : AppUserRole.user;
-}
-
-Future<void> persistAuthSession(Map<String, dynamic> response) async {
-  final user = _parseUserMap(response['user']);
-  final accessToken = response['accessToken']?.toString() ??
-      response['token']?.toString() ??
-      '';
-
-  if (accessToken.isEmpty) {
-    throw Exception('Server did not return an access token.');
-  }
-
-  await AppSession.signIn(
-    role: _roleFromUser(user),
-    email: _userField(user, 'email', 'email'),
-    displayName: _userField(user, 'full_name', 'fullName'),
-    userId: _userIdFromMap(user),
-  );
-  await AppSession.saveToken(accessToken);
+final loginProvider =
+    FutureProvider.family<AsyncValue<void>, Map<String, String>>(
+        (ref, data) async {
+  final service = ref.read(authServiceProvider);
 
   try {
-    await ProfileService().setProfile(
-      _userField(user, 'email', 'email'),
-      user,
+    final response = await service.login(data['email']!, data['password']!);
+
+    await AppSession.signIn(
+      role: response['user']['role'] == 'admin'
+          ? AppUserRole.admin
+          : AppUserRole.user,
+      email: response['user']['email'],
+      displayName: response['user']['full_name'],
     );
-  } catch (_) {}
-}
 
-/// Call from UI after login/register/logout — not from autoDispose providers.
-void invalidateAuthState(WidgetRef ref) {
-  ref.invalidate(authProvider);
-  ref.invalidate(isAdminProvider);
-  ref.invalidate(currentUserRoleProvider);
-  ref.invalidate(userNameProvider);
-  ref.invalidate(userEmailProvider);
-}
+    await AppSession.saveToken(response['accessToken']);
 
-final loginProvider = FutureProvider.autoDispose
-    .family<void, Map<String, String>>((ref, data) async {
-  final service = ref.read(authServiceProvider);
-  final response = await service.login(data['email']!, data['password']!);
-  await persistAuthSession(response);
+    ref.invalidate(authProvider);
+    ref.invalidate(isAdminProvider);
+    ref.invalidate(currentUserRoleProvider);
+    ref.invalidate(userNameProvider);
+    ref.invalidate(userEmailProvider);
+
+    return const AsyncValue.data(null);
+  } catch (e) {
+    print('Login provider error: $e');
+    return AsyncValue.error(e, StackTrace.current);
+  }
 });
 
 final registerProvider = FutureProvider.autoDispose

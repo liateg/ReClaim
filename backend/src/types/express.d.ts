@@ -8,4 +8,8 @@ declare global {
   }
 }
 
+<<<<<<< HEAD
 export {};
+=======
+export {};
+>>>>>>> main

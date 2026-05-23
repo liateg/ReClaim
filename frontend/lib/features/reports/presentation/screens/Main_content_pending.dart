@@ -158,7 +158,7 @@ class FeedbacksPendingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-      
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
             decoration: ShapeDecoration(
@@ -244,7 +244,8 @@ class FeedbacksPendingScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE6E2DB),
                   borderRadius: BorderRadius.circular(6),
@@ -309,9 +310,7 @@ class FeedbacksPendingScreen extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                 
-                },
+                onTap: () {},
                 borderRadius: BorderRadius.circular(12),
                 splashColor: Colors.white.withOpacity(0.1),
                 child: const Padding(

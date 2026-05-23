@@ -23,7 +23,6 @@ router.post("/user", registerUser);
 router.post("/register", registerUser);
 router.post("/login", logInUser);
 router.post("/refresh", refreshToken);
-
 // Protected routes (auth required)
 router.get("/me", authenticateToken, getCurrentUser);
 router.get(

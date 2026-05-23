@@ -1,19 +1,21 @@
+// lib/features/reports/presentation/screens/adminPages/admin_reports_all_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
-import 'package:frontend/features/reports/data/mock/mock_feedback_reports.dart';
+import '../../../Riverpod/report_provider.dart';
+import '../../../data/models/report_model.dart';
 
-class AdminReportsAllScreen extends StatefulWidget {
+class AdminReportsAllScreen extends ConsumerStatefulWidget {
   const AdminReportsAllScreen({super.key});
 
   @override
-  State<AdminReportsAllScreen> createState() => _AdminReportsAllScreenState();
+  ConsumerState<AdminReportsAllScreen> createState() =>
+      _AdminReportsAllScreenState();
 }
 
-class _AdminReportsAllScreenState extends State<AdminReportsAllScreen> {
+class _AdminReportsAllScreenState extends ConsumerState<AdminReportsAllScreen> {
   static const Color kBg = Color(0xFFFEF9F2);
-  static const Color kCard = Color(0xFFF8F3EC);
-  static const Color kMuted = Color(0xFF404943);
   static const Color kGreen = Color(0xFF003925);
 
   final TextEditingController _search = TextEditingController();
@@ -25,124 +27,139 @@ class _AdminReportsAllScreenState extends State<AdminReportsAllScreen> {
     super.dispose();
   }
 
-  void _showTopBanner(String message) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearMaterialBanners();
-    messenger.showMaterialBanner(
-      MaterialBanner(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: kGreen, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: kGreen,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: const [SizedBox.shrink()],
-      ),
-    );
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) messenger.clearMaterialBanners();
-    });
-  }
-
-  List<FeedbackReportMock> get _filtered {
+  List<Report> get _filteredReports {
+    final reports = ref.read(allReportsProvider).value ?? [];
     final q = _search.text.trim().toLowerCase();
-    Iterable<FeedbackReportMock> items = kMockFeedbackReports;
+    var items = List<Report>.from(reports);
 
+    // Filter by tab
     if (_tab == 'Pending') {
-      items = items.where((e) => e.status == FeedbackReportStatus.pending);
+      items = items.where((e) => e.status == ReportStatus.pending).toList();
     } else if (_tab == 'Reviewed') {
-      items = items.where((e) => e.status == FeedbackReportStatus.reviewed);
+      items = items
+          .where((e) =>
+              e.status == ReportStatus.under_review ||
+              e.status == ReportStatus.resolved)
+          .toList();
     }
 
-    if (q.isEmpty) return items.toList();
+    // Filter by search
+    if (q.isNotEmpty) {
+      items = items
+          .where((e) =>
+              e.id.toString().contains(q) ||
+              e.reason.displayName.toLowerCase().contains(q) ||
+              (e.description?.toLowerCase().contains(q) ?? false) ||
+              e.reporterId.toString().contains(q))
+          .toList();
+    }
 
-    return items
-        .where(
-          (e) =>
-              e.reporterLabel.toLowerCase().contains(q) ||
-              e.description.toLowerCase().contains(q) ||
-              e.title.toLowerCase().contains(q) ||
-              e.id.toLowerCase().contains(q),
-        )
-        .toList();
+    return items;
   }
 
-  Future<void> _openDetails(FeedbackReportMock report) async {
-    final result = await context.push<String>(
-      '/admin/reports/${report.id}',
-      extra: report,
+  void _showTopBanner(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: kGreen,
+        duration: const Duration(seconds: 2),
+      ),
     );
-
-    if (!mounted || result == null) return;
-    if (result == 'updated') _showTopBanner('Updated Successfully!');
-    if (result == 'deleted') _showTopBanner('Deleted Successfully!');
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = _filtered;
+    final reportsAsync = ref.watch(allReportsProvider);
 
     return Scaffold(
       backgroundColor: kBg,
-      appBar: const CustomAppBar(title: 'Reports'),
+      appBar: const CustomAppBar(title: 'All Reports', back: true),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: _SearchBar(
-                controller: _search,
-                onChanged: (_) => setState(() {}),
-              ),
+        child: reportsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: $err'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(allReportsProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-              child: _Tabs(
-                value: _tab,
-                onChanged: (v) => setState(() => _tab = v),
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, i) {
-                  final report = items[i];
-                  return _ReportCard(
-                    report: report,
-                    cardColor: kCard,
-                    muted: kMuted,
-                    onPrimaryTap: () => _openDetails(report),
-                  );
-                },
-              ),
-            ),
-          ],
+          ),
+          data: (reports) {
+            final filtered = _filteredReports;
+
+            return Column(
+              children: [
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: _SearchBar(
+                    controller: _search,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                // Tabs
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                  child: _Tabs(
+                    value: _tab,
+                    onChanged: (v) => setState(() => _tab = v),
+                  ),
+                ),
+                // Report List
+                Expanded(
+                  child: filtered.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.inbox_outlined,
+                                  size: 48, color: Colors.grey),
+                              SizedBox(height: 16),
+                              Text('No reports found'),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, i) {
+                            final report = filtered[i];
+                            return _ReportCard(
+                              report: report,
+                              onTap: () async {
+                                final result = await context.push(
+                                    '/admin/reports/${report.id}',
+                                    extra: report);
+                                if (result == 'updated') {
+                                  _showTopBanner('Report updated successfully');
+                                  ref.invalidate(allReportsProvider);
+                                }
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 }
 
+// Search Bar Widget
 class _SearchBar extends StatelessWidget {
-  static const Color kInputBg = Color(0xFFE6E2DB);
-
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
@@ -156,7 +173,7 @@ class _SearchBar extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: kInputBg,
+        color: const Color(0xFFE6E2DB),
         borderRadius: BorderRadius.circular(999),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -181,11 +198,8 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
+// Tabs Widget
 class _Tabs extends StatelessWidget {
-  static const Color kGreen = Color(0xFF003925);
-  static const Color kBg = Color(0xFFFEF9F2);
-  static const Color kInputBg = Color(0xFFE6E2DB);
-
   final String value;
   final ValueChanged<String> onChanged;
 
@@ -200,18 +214,19 @@ class _Tabs extends StatelessWidget {
       final selected = value == label;
       return GestureDetector(
         onTap: () => onChanged(label),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+        child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? kGreen : kBg,
+            color: selected ? const Color(0xFF003925) : const Color(0xFFFEF9F2),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? kGreen : kInputBg),
+            border: Border.all(
+                color: selected
+                    ? const Color(0xFF003925)
+                    : const Color(0xFFE6E2DB)),
           ),
           child: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Roboto',
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: selected ? Colors.white : const Color(0xFF404943),
@@ -233,143 +248,134 @@ class _Tabs extends StatelessWidget {
   }
 }
 
+// Report Card Widget
 class _ReportCard extends StatelessWidget {
-  static const Color kGreen = Color(0xFF003925);
-  static const Color kImageBg = Color(0xFFE6E2DB);
-
-  final FeedbackReportMock report;
-  final Color cardColor;
-  final Color muted;
-  final VoidCallback onPrimaryTap;
+  final Report report;
+  final VoidCallback onTap;
 
   const _ReportCard({
     required this.report,
-    required this.cardColor,
-    required this.muted,
-    required this.onPrimaryTap,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isPending = report.status == FeedbackReportStatus.pending;
+    final isPending = report.status == ReportStatus.pending;
     final primaryLabel = isPending ? 'Review Feedback' : 'View Details';
-    final primaryBg = isPending ? kGreen : const Color(0xFFE6E2DB);
-    final primaryFg = isPending ? Colors.white : kGreen;
+    final primaryBg =
+        isPending ? const Color(0xFF003925) : const Color(0xFFE6E2DB);
+    final primaryFg = isPending ? Colors.white : const Color(0xFF003925);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: kImageBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.image_outlined,
-                    size: 20, color: Color(0xFF77756F)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      report.reporterLabel,
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1D1C18),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      report.submittedLabel,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: report.status.chipBg,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  report.status.label,
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: report.status.chipText,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F3EC),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6E2DB),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: const Icon(Icons.report_outlined,
+                      size: 20, color: Color(0xFF77756F)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        report.reason.displayName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D1C18),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Reported: ${_formatDate(report.createdAt)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF404943),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: report.status.color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    report.status.displayName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: report.status.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (report.description != null &&
+                report.description!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                report.description!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF1D1C18),
+                  height: 1.45,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: 3,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFBA1A1A).withOpacity(0.20),
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            report.description,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              height: 1.45,
-              color: Color(0xFF1D1C18),
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onPrimaryTap,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: primaryBg,
-                foregroundColor: primaryFg,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onTap,
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: primaryBg,
+                  foregroundColor: primaryFg,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-              ),
-              child: Text(
-                primaryLabel,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                child: Text(
+                  primaryLabel,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
 
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown date';
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}

@@ -21,17 +21,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   String? _generalError;
-  bool _isSubmitting = false;
+  bool _isLoading = false;
 
   void _handleSignIn() async {
+    // Reset errors and set loading
     setState(() {
       _generalError = null;
       _emailError = null;
       _passwordError = null;
+      _isLoading = true;
     });
 
+    // Validation
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
+        _isLoading = false;
         if (_emailController.text.isEmpty) {
           _emailError = 'Email is required';
         }
@@ -45,33 +49,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (!_isValidEmail(_emailController.text)) {
       setState(() {
+        _isLoading = false;
         _emailError = 'Enter a valid email address';
       });
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    print('1. Calling login provider with: ${_emailController.text}');
+
     try {
-      final params = {
-        'email': _emailController.text.trim(),
+      await ref.read(loginProvider({
+        'email': _emailController.text,
         'password': _passwordController.text,
-      };
-      ref.invalidate(loginProvider(params));
-      await ref.read(loginProvider(params).future);
+      }).future);
+      print('2. Login provider succeeded');
+    } catch (e) {
+      print('2. Login provider FAILED: $e');
+      setState(() {
+        _isLoading = false;
+        _generalError = e.toString().replaceAll('Exception: ', '');
+        _passwordError = 'Incorrect password';
+      });
+      return;
+    }
 
-      if (!mounted) return;
+    final isLoggedIn = await ref.read(authProvider.future);
+    print('3. isLoggedIn: $isLoggedIn');
 
-      invalidateAuthState(ref);
-      final isLoggedIn = await ref.read(authProvider.future);
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (isLoggedIn) {
       final isAdmin = ref.read(isAdminProvider);
-
-      if (!isLoggedIn) {
-        setState(() {
-          _generalError =
-              'Sign-in completed but session was not saved. Please try again.';
-        });
-        return;
-      }
+      print('4. isAdmin: $isAdmin');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -86,9 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else {
         context.go(RoutePaths.home);
       }
-    } catch (e) {
-      if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
+    } else {
+      print('5. Login failed - showing error message');
       setState(() {
         _generalError = message;
         if (message.toLowerCase().contains('password') ||
@@ -187,7 +197,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 errorText: _passwordError,
               ),
               const SizedBox(height: 24),
-              _isSubmitting
+              _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
                       text: 'Sign in',
@@ -206,9 +216,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () {
                       context.push('/register');
                     },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
                     child: const Text(
                       'Create an account',
                       style: TextStyle(
