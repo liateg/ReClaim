@@ -6,7 +6,6 @@ import '../../features/admin/admin_categories_screen.dart';
 import '../../features/admin/admin_claim_detail_screen.dart';
 import '../../features/admin/admin_claims_screen.dart';
 import '../../features/admin/admin_dashboard.dart';
-import '../../features/admin/admin_items_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
@@ -64,7 +63,7 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: RoutePaths.items,
-          builder: (context, state) => const AdminItemListScreen(),
+          builder: (context, state) => const item_discovery.ClaimsScreen(),
           routes: [
             GoRoute(
               path: ':id',
@@ -115,7 +114,7 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: RoutePaths.adminItems,
-          builder: (context, state) => const AdminItemsScreen(),
+          builder: (context, state) => const AdminItemListScreen(),
         ),
         GoRoute(
           path: RoutePaths.adminClaims,

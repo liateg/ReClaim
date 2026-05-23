@@ -14,6 +14,13 @@ final itemsListProvider =
   return items.map((item) => item.toMap()).toList();
 });
 
+/// Admin inventory view backed by the real admin route.
+final adminItemsListProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final items = await ref.read(itemsServiceProvider).getAdminItems();
+  return items.map((item) => item.toMap()).toList();
+});
+
 /// My Posts tab — items posted by the current user.
 final myItemsListProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
@@ -30,6 +37,7 @@ final itemByIdProvider =
 /// Refresh lists after create/update/delete/claim (call from UI, not autoDispose providers).
 void invalidateItemsState(WidgetRef ref, {String? itemId}) {
   ref.invalidate(itemsListProvider);
+  ref.invalidate(adminItemsListProvider);
   ref.invalidate(myItemsListProvider);
   if (itemId != null) {
     ref.invalidate(itemByIdProvider(itemId));

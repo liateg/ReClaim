@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/session/app_session.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   final Dio _dio = Dio();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const String baseUrl = 'http://10.0.2.2:3000';
   static String? _testToken;
@@ -59,10 +61,15 @@ class AuthService {
         'email': email.trim(),
         'password': password,
       });
-      final token = response.data['accessToken'];
-      await _storage.write(key: 'token', value: token);
 
-      return response.data;
+      final responseData = Map<String, dynamic>.from(response.data as Map);
+      final token = responseData['accessToken'] ?? responseData['token'];
+      if (token != null) {
+        await _storage.write(key: 'token', value: token.toString());
+        await AppSession.saveToken(token.toString());
+      }
+
+      return responseData;
     } catch (e) {
       print('Register error: $e');
       if (e is DioException) {
@@ -87,6 +94,7 @@ class AuthService {
     } catch (_) {
       // Still clear local session if backend logout fails.
     } finally {
+      await _storage.delete(key: 'token');
       await AppSession.clearToken();
     }
   }

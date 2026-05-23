@@ -22,7 +22,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> _filterPosts(List<Map<String, dynamic>> items) {
+  List<Map<String, dynamic>> _filterItems(List<Map<String, dynamic>> items) {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) return items;
     return items.where((item) {
@@ -134,10 +134,10 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final itemsAsync = ref.watch(myItemsListProvider);
+    final itemsAsync = ref.watch(adminItemsListProvider);
 
     return Scaffold(
-      appBar: CustomAppBar(title: "My Posts", back: false),
+      appBar: const CustomAppBar(title: 'All Posted Items', back: false),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: itemsAsync.when(
@@ -146,45 +146,37 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Failed to load posts: $error'),
+                Text('Failed to load items: $error'),
                 TextButton(
-                  onPressed: () => ref.invalidate(myItemsListProvider),
+                  onPressed: () => ref.invalidate(adminItemsListProvider),
                   child: const Text('Retry'),
                 ),
               ],
             ),
           ),
           data: (items) {
-            final filtered = _filterPosts(items);
+            final filtered = _filterItems(items);
             if (filtered.isEmpty && _searchController.text.isEmpty) {
-              return Center(
+              return const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.inventory_2_outlined,
                       size: 70,
                       color: Color(0xFF1B5E3E),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "No Posted Items",
+                    SizedBox(height: 16),
+                    Text(
+                      'No items available',
                       style:
                           TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Post your first item to manage it here.",
+                    SizedBox(height: 8),
+                    Text(
+                      'Items created through the app will appear here.',
                       style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B5E3E),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => context.go('/post'),
-                      child: const Text('Post New Item'),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -194,20 +186,25 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("My Posts",
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B5E3E))),
-                const Text("Managing your active traces and valued returns.",
-                    style: TextStyle(color: Colors.grey, fontSize: 12)),
+                const Text(
+                  'All Posted Items',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B5E3E),
+                  ),
+                ),
+                const Text(
+                  'Review every item record returned from the backend.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search your items...',
+                    hintText: 'Search items by title or location...',
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -219,7 +216,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
                 const SizedBox(height: 20),
                 Expanded(
                   child: filtered.isEmpty
-                      ? const Center(child: Text('No matching posts found'))
+                      ? const Center(child: Text('No matching items found'))
                       : ListView.builder(
                           itemCount: filtered.length,
                           itemBuilder: (context, index) =>
@@ -253,6 +250,12 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
               const SizedBox(height: 8),
               Text((item['description'] as String?) ?? ''),
               const SizedBox(height: 14),
+              Text('Status: ${(item['status'] as String?) ?? '-'}'),
+              const SizedBox(height: 4),
+              Text('Category: ${(item['category'] as String?) ?? '-'}'),
+              const SizedBox(height: 4),
+              Text('Posted by: ${item['posted_by']?.toString() ?? '-'}'),
+              const SizedBox(height: 4),
               Text(
                   'Verification key: ${(item['verification_question'] as String?) ?? '-'}'),
               const SizedBox(height: 4),
@@ -321,10 +324,19 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text((item['title'] as String?) ?? 'Untitled item',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text((item['location'] as String?) ?? 'Unknown location',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  (item['title'] as String?) ?? 'Untitled item',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  (item['location'] as String?) ?? 'Unknown location',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Status: ${(item['status'] as String?) ?? '-'}',
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [

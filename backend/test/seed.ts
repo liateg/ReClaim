@@ -19,6 +19,8 @@ async function seed() {
       "TRUNCATE TABLE reports, claims, items, categories, users RESTART IDENTITY CASCADE;",
     );
 
+    const seedPassword = "TestPass123!";
+
     const seedUsers = [
       {
         fullName: "Admin User",
@@ -49,7 +51,7 @@ async function seed() {
       })),
     );
 
-    const hash = await bcrypt.hash(seedUsers[0].password, 10);
+    const hash = await bcrypt.hash(seedPassword, 10);
 
     // Insert users
     const usersRes = await pool.query(
@@ -82,9 +84,17 @@ async function seed() {
     const bobId = usersRes.rows[2].id;
 
     console.log("Seed login credentials:", {
-      admin: { email: "admin@example.com", password, role: "admin" },
-      alice: { email: "alice@example.com", password, role: "user" },
-      bob: { email: "bob@example.com", password, role: "user" },
+      admin: {
+        email: "admin@example.com",
+        password: seedPassword,
+        role: "admin",
+      },
+      alice: {
+        email: "alice@example.com",
+        password: seedPassword,
+        role: "user",
+      },
+      bob: { email: "bob@example.com", password: seedPassword, role: "user" },
     });
 
     // Insert categories

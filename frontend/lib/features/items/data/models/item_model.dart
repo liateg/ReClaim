@@ -85,11 +85,16 @@ class ItemModel {
       category: map[keyCategory]?.toString() ?? _categoryFromId(categoryId),
       categoryId: categoryId,
       status: map[keyStatus]?.toString() ?? 'available',
-      dateFound: map[keyDate]?.toString() ?? '',
-      verificationQuestion: map[keyQuestion]?.toString() ?? '',
-      verificationAnswer: map[keyAnswer]?.toString() ?? '',
-      imageUrl: map[keyImage]?.toString() ?? '',
-      hiddenDetails: _stringOrNull(map[keyHiddenDetails]),
+      dateFound: map[keyDate]?.toString() ?? map['dateFound']?.toString() ?? '',
+      verificationQuestion: map[keyQuestion]?.toString() ??
+          map['verificationQuestion']?.toString() ??
+          '',
+      verificationAnswer: map[keyAnswer]?.toString() ??
+          map['verificationAnswer']?.toString() ??
+          '',
+      imageUrl: map[keyImage]?.toString() ?? map['imageUrl']?.toString() ?? '',
+      hiddenDetails:
+          _stringOrNull(map[keyHiddenDetails] ?? map['hiddenDetails']),
       postedBy: _parseInt(map[keyPostedBy] ?? map['postedBy']),
       createdAt: _stringOrNull(map[keyCreatedAt] ?? map['createdAt']),
       updatedAt: _stringOrNull(map[keyUpdatedAt] ?? map['updatedAt']),

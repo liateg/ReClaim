@@ -32,7 +32,7 @@ class ProfileScreen extends ConsumerWidget {
       ref.invalidate(logoutProvider);
       await ref.read(logoutProvider.future);
       if (!context.mounted) return;
-      invalidateAuthState(ref);
+      ref.invalidate(authProvider);
       context.go(RoutePaths.login);
     }
   }
