@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/features/auth/Riverpod/auth_provider.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
 import 'package:frontend/features/claims/data/model/claim_model.dart';
@@ -56,8 +57,9 @@ class _ClaimSubmissionContentState extends ConsumerState<ClaimSubmissionContent>
       await ref.read(claimProvider.notifier).addClaim(newClaim);
 
       if (!mounted) return;
+      final router = GoRouter.of(context);
       Navigator.pop(context, true);
-      context.go('/claims');
+      router.go('/claims');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Claim submitted successfully! Check it here.')),
       );
