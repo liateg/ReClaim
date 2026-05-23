@@ -5,7 +5,7 @@ class AuthService {
   final Dio _dio = Dio();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://10.0.2.2:3000';
   // Test token override: when running tests in Dart VM we cannot use
   // `flutter_secure_storage`. Set this to bypass secure storage in tests.
   static String? _testToken;
@@ -29,6 +29,12 @@ class AuthService {
 
       return response.data;
     } catch (e) {
+      if (e is DioException) {
+        final responseMessage = e.response?.data is Map<String, dynamic>
+            ? e.response?.data['message']?.toString()
+            : null;
+        throw Exception(responseMessage ?? 'Login failed');
+      }
       throw Exception('Login failed');
     }
   }
@@ -41,7 +47,6 @@ class AuthService {
         'email': email,
         'password': password,
       });
-
       final token = response.data['accessToken'];
       await _storage.write(key: 'token', value: token);
 
