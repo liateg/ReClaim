@@ -25,8 +25,8 @@ final createReportProvider =
     FutureProvider.family<void, Map<String, dynamic>>((ref, data) async {
   final service = ref.read(reportServiceProvider);
   await service.createReport(
-    itemId: data['itemId'],
-    claimId: data['claimId'],
+    itemId: data['itemId'] as int?,
+    claimId: data['claimId'] as int?,
     reason: data['reason'],
     description: data['description'],
   );
