@@ -1,113 +1,118 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:frontend/shared/widgets/custom_text_field.dart';
-import 'package:frontend/shared/widgets/custom_button.dart';
-import '../../../../utils/router/route_paths.dart';
+import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../utils/theme/app_theme.dart';
 import '../../riverpod/auth_provider.dart';
+import '../../../../utils/router/route_paths.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends ConsumerStatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
+  String? _nameError;
   String? _emailError;
   String? _passwordError;
+  String? _confirmPasswordError;
   String? _generalError;
-  bool _isLoading = false;
 
-  void _handleSignIn() async {
-    // Reset errors and set loading
+  void _handleRegister() async {
     setState(() {
       _generalError = null;
+      _nameError = null;
       _emailError = null;
       _passwordError = null;
-      _isLoading = true;
+      _confirmPasswordError = null;
     });
 
-    // Validation
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       setState(() {
-        _isLoading = false;
+        if (_nameController.text.isEmpty) {
+          _nameError = 'Name field can not be empty';
+        }
         if (_emailController.text.isEmpty) {
           _emailError = 'Email is required';
         }
         if (_passwordController.text.isEmpty) {
           _passwordError = 'Password is required';
         }
+        if (_confirmPasswordController.text.isEmpty) {
+          _confirmPasswordError = 'Please confirm your password';
+        }
         _generalError = 'Please fill in all fields';
+      });
+      return;
+    }
+
+    if (_nameController.text.length < 2) {
+      setState(() {
+        _nameError = 'Name must be at least 2 characters';
       });
       return;
     }
 
     if (!_isValidEmail(_emailController.text)) {
       setState(() {
-        _isLoading = false;
-        _emailError = 'Enter a valid email address';
+        _emailError = 'Invalid email format (e.g., name@domain.com)';
       });
       return;
     }
 
-    print('1. Calling login provider with: ${_emailController.text}');
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _confirmPasswordError = 'Passwords do not match';
+      });
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _passwordError = 'Password must be at least 6 characters';
+      });
+      return;
+    }
 
     try {
-      await ref.read(loginProvider({
+      await ref.read(registerProvider({
+        'fullName': _nameController.text,
         'email': _emailController.text,
         'password': _passwordController.text,
       }).future);
-      print('2. Login provider succeeded');
-    } catch (e) {
-      print('2. Login provider FAILED: $e');
-      setState(() {
-        _isLoading = false;
-        _generalError = e.toString().replaceAll('Exception: ', '');
-        _passwordError = 'Incorrect password';
-      });
-      return;
-    }
 
-    final isLoggedIn = await ref.read(authProvider.future);
-    print('3. isLoggedIn: $isLoggedIn');
+      final isLoggedIn = await ref.read(authProvider.future);
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (isLoggedIn) {
-      final isAdmin = ref.read(isAdminProvider);
-      print('4. isAdmin: $isAdmin');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Welcome back, ${_emailController.text.split('@')[0]}!'),
-          backgroundColor: AppTheme.primaryGreenLight,
-        ),
-      );
-
-      if (isAdmin) {
-        context.go(RoutePaths.adminDashboard);
-      } else {
+      if (isLoggedIn) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
         context.go(RoutePaths.home);
+      } else {
+        setState(() {
+          _generalError = 'Registration failed. Please try again.';
+        });
       }
-    } else {
-      print('5. Login failed - showing error message');
+    } catch (e) {
+      print('8. Error caught: $e');
       setState(() {
-        _generalError = message;
-        if (message.toLowerCase().contains('password') ||
-            message.toLowerCase().contains('invalid email')) {
-          _passwordError = message;
-        }
+        _generalError = 'Registration failed: ${e.toString()}';
       });
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -118,13 +123,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
@@ -139,17 +147,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Welcome Back',
+                'Create Account',
                 style: TextStyle(
                   fontSize: 40,
+                  color: Color(0xFF1C3E1B),
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
                 ),
                 textAlign: TextAlign.left,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(
+                height: 10,
+              ),
               const Text(
-                'Access your secure vault and track your items.',
+                'Join our community to help reunite lost belongings with their owners.',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.black,
@@ -164,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade300),
+                    border: Border.all(color: AppTheme.accentRed),
                   ),
                   child: Row(
                     children: [
@@ -182,8 +192,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               CustomTextField(
+                controller: _nameController,
+                label: 'FULL NAME',
+                hint: 'Enter your name.',
+                errorText: _nameError,
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
                 controller: _emailController,
-                label: 'EMAIL ADDRESS',
+                label: 'EMAIL',
                 hint: 'abebe@aau.edu.et',
                 keyboardType: TextInputType.emailAddress,
                 errorText: _emailError,
@@ -192,16 +209,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               CustomTextField(
                 controller: _passwordController,
                 label: 'PASSWORD',
-                hint: '·············',
+                hint: '*********',
                 obscureText: true,
                 errorText: _passwordError,
               ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _confirmPasswordController,
+                label: 'CONFIRM PASSWORD',
+                hint: '*********',
+                obscureText: true,
+                errorText: _confirmPasswordError,
+              ),
               const SizedBox(height: 24),
-              _isLoading
+              authState.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
-                      text: 'Sign in',
-                      onPressed: _handleSignIn,
+                      text: 'Create Account',
+                      onPressed: _handleRegister,
                       isLoading: false,
                     ),
               const SizedBox(height: 24),
@@ -209,15 +234,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'New to Reclaim?',
+                    'Already have an account?',
                     style: TextStyle(fontSize: 14, color: AppTheme.grayText),
                   ),
                   TextButton(
                     onPressed: () {
-                      context.push('/register');
+                      context.push('/login');
                     },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                     child: const Text(
-                      'Create an account',
+                      'Sign In',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -226,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ],
-              ),
+              )
             ],
           ),
         ),

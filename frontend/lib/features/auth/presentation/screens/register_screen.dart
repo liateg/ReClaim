@@ -86,19 +86,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    setState(() => _generalError = null);
     try {
-      final params = {
-        'fullName': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
+      await ref.read(registerProvider({
+        'fullName': _nameController.text,
+        'email': _emailController.text,
         'password': _passwordController.text,
-      };
-      ref.invalidate(registerProvider(params));
-      await ref.read(registerProvider(params).future);
+      }).future);
 
-      if (!mounted) return;
-
-      invalidateAuthState(ref);
       final isLoggedIn = await ref.read(authProvider.future);
 
       if (isLoggedIn) {
@@ -115,16 +109,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         });
       }
     } catch (e) {
-      if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
+      print('8. Error caught: $e');
       setState(() {
-        if (message.toLowerCase().contains('already exists')) {
-          _generalError =
-              'An account with this email already exists. Please sign in instead.';
-          _emailError = 'Email already registered';
-        } else {
-          _generalError = message;
-        }
+        _generalError = 'Registration failed: ${e.toString()}';
       });
     }
   }
