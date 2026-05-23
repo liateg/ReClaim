@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
+import 'package:frontend/utils/helpers/image_helper.dart';
 
 /// Displays a claim image from a network URL or local file path.
 class ClaimImagePreview extends StatelessWidget {
@@ -25,16 +26,19 @@ class ClaimImagePreview extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    final url = imageUrl;
-    if (url == null || url.isEmpty) {
+    final url = ImageHelper.getValidUrl(imageUrl);
+    if (url.isEmpty) {
       return _placeholder();
     }
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return Image.network(url, fit: BoxFit.cover);
+    
+    if (url.startsWith('http')) {
+      return Image.network(
+        url, 
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
+      );
     }
-    if (url.startsWith('/uploads/')) {
-      return Image.network('http://localhost:3000$url', fit: BoxFit.cover);
-    }
+    
     final file = File(url);
     if (file.existsSync()) {
       return Image.file(file, fit: BoxFit.cover);

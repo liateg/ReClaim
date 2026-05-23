@@ -25,10 +25,8 @@ class ClaimNotifier extends StateNotifier<ClaimState> {
     try {
       state = state.copyWith(isLoading: true, errorMessage: null);
       final newClaim = await _service.createClaim(claim);
-      state = state.copyWith(
-        claims: [...state.claims, newClaim],
-        isLoading: false,
-      );
+      // Force refresh from server to ensure IDs and status are perfectly in sync
+      await loadClaims();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }

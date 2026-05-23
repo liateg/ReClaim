@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:frontend/features/items/data/models/item_model.dart';
+import 'package:frontend/utils/helpers/image_helper.dart';
 
 class ItemCard extends StatelessWidget {
   final Item item;
@@ -30,7 +31,7 @@ class ItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Image.network(
-              imageUrl.startsWith('/uploads/') ? 'http://localhost:3000$imageUrl' : imageUrl,
+              ImageHelper.getValidUrl(imageUrl),
               height: 180, 
               width: double.infinity, 
               fit: BoxFit.cover,

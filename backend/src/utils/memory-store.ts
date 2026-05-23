@@ -40,11 +40,11 @@ class MemoryStore {
     {
       id: 1,
       title: "Silver iPhone 13 Pro",
-      description: "Found near the library cafeteria. Has a clear case.",
+      description: "Found near the library cafeteria. Has a clear case with a distinctive sticker on the back.",
       category: "Electronics",
       location: "Library Cafeteria",
       dateFound: new Date().toISOString(),
-      imageUrl: "https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=500",
+      imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=1000",
       verificationQuestion: "What is the flower on the wallpaper?",
       verificationAnswer: "Sunflower",
       hiddenDetails: "Slight scratch on the bottom left corner.",
@@ -56,11 +56,11 @@ class MemoryStore {
     {
       id: 2,
       title: "Black Leather Wallet",
-      description: "Found in the parking lot. Contains no cash but has a student ID.",
-      category: "Accessories",
+      description: "Found in the parking lot. Contains no cash but has multiple student IDs and a library card.",
+      category: "Personal Items",
       location: "Main Parking Lot",
       dateFound: new Date().toISOString(),
-      imageUrl: "https://images.unsplash.com/photo-1627123430985-63df50f58448?w=500",
+      imageUrl: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=1000",
       verificationQuestion: "What is the initial on the ID card?",
       verificationAnswer: "J.D.",
       hiddenDetails: "There is a lucky coin in the hidden compartment.",
@@ -68,7 +68,7 @@ class MemoryStore {
       postedBy: 888,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    }
+    },
   ];
 
   private claims: Claim[] = [

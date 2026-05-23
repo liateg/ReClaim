@@ -57,8 +57,9 @@ class _ClaimSubmissionContentState extends ConsumerState<ClaimSubmissionContent>
 
       if (!mounted) return;
       Navigator.pop(context, true);
+      context.go('/claims');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Claim submitted successfully.')),
+        const SnackBar(content: Text('Claim submitted successfully! Check it here.')),
       );
     } catch (e) {
       if (!mounted) return;

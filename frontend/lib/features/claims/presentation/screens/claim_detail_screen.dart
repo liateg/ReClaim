@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
 import 'package:frontend/features/claims/enum/claim_status.dart';
+import 'package:frontend/features/reports/presentation/screens/submit_feedback_screen.dart';
+import 'package:frontend/utils/helpers/image_helper.dart';
 import '../widgets/claim_image_preview.dart';
 
 class ClaimDetailScreen extends ConsumerWidget {
@@ -21,7 +22,7 @@ class ClaimDetailScreen extends ConsumerWidget {
       orElse: () => claimState.claims.first,
     );
 
-    final isApproved = claim.status.name.toLowerCase() == 'approved';
+    final isApproved = claim.status == ClaimStatus.approved;
     final status = claim.status.name.toUpperCase();
 
     return Scaffold(
@@ -36,9 +37,20 @@ class ClaimDetailScreen extends ConsumerWidget {
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),
               ),
-              child: ClaimImagePreview(
-                imageUrl: claim.imageUrl,
-                placeholderIconSize: 60,
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Image.network(
+                  ImageHelper.getValidUrl(claim.imageUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppTheme.grayBorder.withValues(alpha: 0.4),
+                    child: const Icon(
+                      Icons.image_outlined,
+                      size: 60,
+                      color: AppTheme.grayText,
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -60,22 +72,15 @@ class ClaimDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => context.go('/claims/${claim.id}/edit'),
-                        icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryGreen),
-                      ),
-                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: claim.status == ClaimStatus.approved
+                          color: isApproved
                               ? AppTheme.statusApprovedLight
-                              : claim.status == ClaimStatus.withdrawn
-                                  ? Colors.grey.shade200
-                                  : AppTheme.statusPendingLight,
+                              : AppTheme.statusPendingLight,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -83,11 +88,9 @@ class ClaimDetailScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: claim.status == ClaimStatus.approved
+                            color: isApproved
                                 ? AppTheme.primaryGreen
-                                : claim.status == ClaimStatus.withdrawn
-                                    ? Colors.grey.shade700
-                                    : Colors.orange,
+                                : Colors.orange,
                           ),
                         ),
                       ),
@@ -105,17 +108,16 @@ class ClaimDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 18),
                   const Text(
                     "REPORT ID",
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: TextStyle(fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.grayText,
                       letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    "#RC-992-${claim.id.padLeft(4, '0')}",
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  const Text(
+                    "#RC-992-8810",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   if (isApproved) ...[
                     const SizedBox(height: 20),
@@ -147,7 +149,7 @@ class ClaimDetailScreen extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: AppTheme.feedbackCardBackground,
+                      color: const Color(0xFFE6E2DB),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -179,7 +181,14 @@ class ClaimDetailScreen extends ConsumerWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => SubmitFeedbackScreen(
+                                            claimId: claimId,
+                                          )));
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryGreen,
                               shape: RoundedRectangleBorder(
@@ -196,74 +205,7 @@ class ClaimDetailScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            final success = await ref.read(claimProvider.notifier).withdrawClaim(claimId);
-                            if (success && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Claim withdrawn')),
-                              );
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.orange),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            "Withdraw",
-                            style: TextStyle(color: Colors.orange),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Claim'),
-                                content: const Text('Are you sure you want to delete this claim?'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-                                ],
-                              ),
-                            );
-
-                            if (confirm == true) {
-                              final success = await ref.read(claimProvider.notifier).deleteClaim(claimId);
-                              if (success && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Claim deleted')),
-                                );
-                                context.go('/claims');
-                              }
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade400,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            "Delete",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 25),
                 ],
               ),
             ),
@@ -272,4 +214,4 @@ class ClaimDetailScreen extends ConsumerWidget {
       ),
     );
   }
-}
+} 

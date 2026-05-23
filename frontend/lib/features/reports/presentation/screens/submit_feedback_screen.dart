@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
 
-class SubmitFeedbackScreen extends StatefulWidget {
-  const SubmitFeedbackScreen({super.key});
+class SubmitFeedbackScreen extends ConsumerStatefulWidget {
+  final String claimId;
+  const SubmitFeedbackScreen({super.key, required this.claimId});
 
   @override
-  State<SubmitFeedbackScreen> createState() => _SubmitFeedbackScreenState();
+  ConsumerState<SubmitFeedbackScreen> createState() => _SubmitFeedbackScreenState();
 }
 
-class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
+class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
 
   static const Color kBg        = Color(0xFFFEF9F2);
   static const Color kHeaderBg  = Color(0xCCFEF9F2);
@@ -219,6 +222,12 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
 
   
   Widget _buildItemCard() {
+    final claimState = ref.watch(claimProvider);
+    final claim = claimState.claims.firstWhere(
+      (c) => c.id == widget.claimId,
+      orElse: () => claimState.claims.first,
+    );
+
     return Container(
       width: double.infinity,
       height: 125,
@@ -242,7 +251,9 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
               color: kInputBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Icon(Icons.image_outlined, color: Color(0xFF8A9490), size: 36),
+            child: claim.imageUrl != null && claim.imageUrl!.isNotEmpty
+                ? Image.network(claim.imageUrl!, fit: BoxFit.cover)
+                : const Icon(Icons.image_outlined, color: Color(0xFF8A9490), size: 36),
           ),
           const SizedBox(width: 24),
           Expanded(
@@ -250,21 +261,27 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  claim.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _manrope(size: 16, weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Claim ID: #${claim.id.padLeft(4, '0')}',
+                  style: _manrope(size: 13, color: kTextBody.withOpacity(0.7)),
+                ),
+                const SizedBox(height: 4),
                 Container(
-                  height: 14,
-                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: kInputBg,
+                    color: kDarkGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 14,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: kInputBg,
-                    borderRadius: BorderRadius.circular(4),
+                  child: Text(
+                    claim.category,
+                    style: _manrope(size: 10, weight: FontWeight.w600, color: kDarkGreen),
                   ),
                 ),
               ],

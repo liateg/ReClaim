@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/presentation/riverpod/item_provider.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
-import 'package:frontend/core/api/dio_client.dart';
+import 'package:frontend/utils/helpers/image_helper.dart';
 import '../widgets/claim_submission_content.dart';
 import 'package:frontend/features/items/data/models/item_model.dart';
 
@@ -47,9 +47,7 @@ class ItemDetailScreen extends ConsumerWidget {
             Stack(
               children: [
                 Image.network(
-                  item.imageUrl != null && item.imageUrl!.startsWith('http')
-                      ? item.imageUrl!
-                      : '${DioClient.baseUrl}${item.imageUrl}',
+                  ImageHelper.getValidUrl(item.imageUrl),
                   height: 350,
                   width: double.infinity,
                   fit: BoxFit.cover,
