@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/presentation/screens/edit_item_screen.dart';
+import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
-import 'package:frontend/features/items/data/mock_data.dart';
 import 'package:go_router/go_router.dart';
 
-
-class AdminItemListScreen extends StatefulWidget {
+class AdminItemListScreen extends ConsumerStatefulWidget {
   const AdminItemListScreen({super.key});
 
   @override
-  State<AdminItemListScreen> createState() => _AdminItemListScreenState();
+  ConsumerState<AdminItemListScreen> createState() =>
+      _AdminItemListScreenState();
 }
 
-class _AdminItemListScreenState extends State<AdminItemListScreen> {
+class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -21,10 +22,10 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredPosts {
+  List<Map<String, dynamic>> _filterItems(List<Map<String, dynamic>> items) {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return mockItems;
-    return mockItems.where((item) {
+    if (query.isEmpty) return items;
+    return items.where((item) {
       final title = (item['title'] as String?)?.toLowerCase() ?? '';
       final location = (item['location'] as String?)?.toLowerCase() ?? '';
       return title.contains(query) || location.contains(query);
@@ -111,82 +112,121 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
 
     final confirm = await _showDeleteConfirmationDialog();
     if (!confirm) return;
-    removeMockItem(id);
-    if (!mounted) return;
-    setState(() {});
-    _showTopSuccessBanner('Deleted successfully');
+
+    try {
+      final deleted = await ref.read(deleteItemProvider(id).future);
+      if (!mounted) return;
+      if (deleted) {
+        invalidateItemsState(ref, itemId: id);
+        _showTopSuccessBanner('Deleted successfully');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete item.')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete item: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final itemsAsync = ref.watch(adminItemsListProvider);
+
     return Scaffold(
-      appBar: CustomAppBar(title: "My Posts", back: false),
+      appBar: const CustomAppBar(title: 'All Posted Items', back: false),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: _filteredPosts.isEmpty && _searchController.text.isEmpty
-            ? Center(
+        child: itemsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Failed to load items: $error'),
+                TextButton(
+                  onPressed: () => ref.invalidate(adminItemsListProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+          data: (items) {
+            final filtered = _filterItems(items);
+            if (filtered.isEmpty && _searchController.text.isEmpty) {
+              return const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.inventory_2_outlined,
                       size: 70,
                       color: Color(0xFF1B5E3E),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "No Posted Items",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    SizedBox(height: 16),
+                    Text(
+                      'No items available',
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Post your first item to manage it here.",
+                    SizedBox(height: 8),
+                    Text(
+                      'Items created through the app will appear here.',
                       style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B5E3E),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => context.go('/post'),
-                      child: const Text('Post New Item'),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("My Posts", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1B5E3E))),
-                  const Text("Managing your active traces and valued returns.", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search),
-                      hintText: 'Search your items...',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'All Posted Items',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B5E3E),
+                  ),
+                ),
+                const Text(
+                  'Review every item record returned from the backend.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Search items by title or location...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: _filteredPosts.isEmpty
-                        ? const Center(child: Text('No matching posts found'))
-                        : ListView.builder(
-                            itemCount: _filteredPosts.length,
-                            itemBuilder: (context, index) =>
-                                _buildAdminCard(_filteredPosts[index], context),
-                          ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? const Center(child: Text('No matching items found'))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) =>
+                              _buildAdminCard(filtered[index], context),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -204,14 +244,23 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
             children: [
               Text(
                 (item['title'] as String?) ?? 'Untitled item',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
               const SizedBox(height: 8),
               Text((item['description'] as String?) ?? ''),
               const SizedBox(height: 14),
-              Text('Verification key: ${(item['verification_question'] as String?) ?? '-'}'),
+              Text('Status: ${(item['status'] as String?) ?? '-'}'),
               const SizedBox(height: 4),
-              Text('Possible answer: ${(item['verification_answer'] as String?) ?? '-'}'),
+              Text('Category: ${(item['category'] as String?) ?? '-'}'),
+              const SizedBox(height: 4),
+              Text('Posted by: ${item['posted_by']?.toString() ?? '-'}'),
+              const SizedBox(height: 4),
+              Text(
+                  'Verification key: ${(item['verification_question'] as String?) ?? '-'}'),
+              const SizedBox(height: 4),
+              Text(
+                  'Possible answer: ${(item['verification_answer'] as String?) ?? '-'}'),
               const SizedBox(height: 18),
             ],
           ),
@@ -220,32 +269,74 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     );
   }
 
-  Future<void> _openEditScreen(Map<String, dynamic> item, BuildContext context) async {
+  Future<void> _openEditScreen(
+      Map<String, dynamic> item, BuildContext context) async {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => EditItemScreen(item: item)),
     );
 
     if (changed == true && mounted) {
-      setState(() {});
+      ref.invalidate(myItemsListProvider);
     }
+  }
+
+  Widget _adminThumb(String? imageUrl) {
+    final url = imageUrl?.trim() ?? '';
+    if (url.isEmpty) {
+      return Container(
+        width: 70,
+        height: 70,
+        color: Colors.grey.shade200,
+        alignment: Alignment.center,
+        child: const Icon(Icons.image_not_supported, size: 20),
+      );
+    }
+    return Image.network(
+      url,
+      width: 70,
+      height: 70,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: 70,
+        height: 70,
+        color: Colors.grey.shade200,
+        alignment: Alignment.center,
+        child: const Icon(Icons.broken_image, size: 20),
+      ),
+    );
   }
 
   Widget _buildAdminCard(Map<String, dynamic> item, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(item['image_url'], width: 70, height: 70, fit: BoxFit.cover)),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: _adminThumb(item['image_url'] as String?),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text((item['title'] as String?) ?? 'Untitled item', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text((item['location'] as String?) ?? 'Unknown location', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  (item['title'] as String?) ?? 'Untitled item',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  (item['location'] as String?) ?? 'Unknown location',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Status: ${(item['status'] as String?) ?? '-'}',
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [

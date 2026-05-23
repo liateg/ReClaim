@@ -9,7 +9,7 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = (item['image_url'] as String?) ?? '';
+    final imageUrl = (item['image_url'] as String?)?.trim() ?? '';
     final title = (item['title'] as String?) ?? 'Untitled item';
     final location = (item['location'] as String?) ?? 'Unknown location';
     final status = (item['status'] as String?) ?? 'available';
@@ -27,19 +27,27 @@ class ItemCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: Image.network(
-              imageUrl,
-              height: 180, 
-              width: double.infinity, 
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 180,
-                width: double.infinity,
-                color: Colors.grey.shade200,
-                alignment: Alignment.center,
-                child: const Icon(Icons.broken_image, color: Colors.grey),
-              ),
-            ),
+            child: imageUrl.isEmpty
+                ? Container(
+                    height: 180,
+                    width: double.infinity,
+                    color: Colors.grey.shade200,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                  )
+                : Image.network(
+                    imageUrl,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: Colors.grey.shade200,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                    ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(16),

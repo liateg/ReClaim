@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/session/app_session.dart';
 import 'utils/router/app_router.dart';
 import 'utils/theme/app_theme.dart';
-import 'package:frontend/core/session/app_session.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
