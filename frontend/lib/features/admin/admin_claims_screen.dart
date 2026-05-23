@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../claims/data/mock/mock_claims.dart';
 import '../claims/data/model/claim_model.dart';
 import '../claims/enum/claim_status.dart';
 import '../claims/presentation/widgets/admin.claim_card.dart';

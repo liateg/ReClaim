@@ -3,8 +3,10 @@ import 'package:frontend/features/items/data/mock_data.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:frontend/features/items/data/models/item_model.dart';
+
 class EditItemScreen extends StatefulWidget {
-  final Map<String, dynamic> item;
+  final Item item;
   const EditItemScreen({super.key, required this.item});
 
   @override
@@ -22,18 +24,18 @@ class _EditItemScreenState extends State<EditItemScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: (widget.item['title'] as String?) ?? '');
-    _locationController = TextEditingController(text: (widget.item['location'] as String?) ?? '');
+    _titleController = TextEditingController(text: widget.item.title);
+    _locationController = TextEditingController(text: widget.item.location);
     _descriptionController = TextEditingController(
-      text: (widget.item['description'] as String?) ?? '',
+      text: widget.item.description,
     );
     _verificationQuestionController = TextEditingController(
-      text: (widget.item['verification_question'] as String?) ?? '',
+      text: widget.item.verificationQuestion,
     );
     _verificationAnswerController = TextEditingController(
-      text: (widget.item['verification_answer'] as String?) ?? '',
+      text: widget.item.verificationAnswer,
     );
-    _selectedCategory = (widget.item['category'] as String?) ?? 'Other';
+    _selectedCategory = widget.item.category;
   }
 
   @override
@@ -47,15 +49,14 @@ class _EditItemScreenState extends State<EditItemScreen> {
   }
 
   void _saveChanges() {
-    final id = widget.item['id']?.toString();
+    final id = widget.item.id;
     final title = _titleController.text.trim();
     final location = _locationController.text.trim();
     final description = _descriptionController.text.trim();
     final verificationQuestion = _verificationQuestionController.text.trim();
     final verificationAnswer = _verificationAnswerController.text.trim();
 
-    if (id == null ||
-        title.isEmpty ||
+    if (title.isEmpty ||
         location.isEmpty ||
         description.isEmpty ||
         verificationQuestion.isEmpty ||
@@ -106,7 +107,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: Image.network(
-                (widget.item['image_url'] as String?) ?? '',
+                widget.item.imageUrl ?? '',
                 height: 180,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -141,7 +142,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              initialValue: _selectedCategory,
+              value: _selectedCategory,
               decoration: const InputDecoration(labelText: 'Category'),
               items: const [
                 DropdownMenuItem(value: 'Electronics', child: Text('Electronics')),

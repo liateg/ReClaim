@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:state_notifier/state_notifier.dart';
 import 'package:frontend/features/claims/data/model/claim_model.dart';
 import 'package:frontend/features/claims/data/mock/mock_claims.dart';
 import 'package:frontend/features/claims/Riverpod/claim_state.dart';

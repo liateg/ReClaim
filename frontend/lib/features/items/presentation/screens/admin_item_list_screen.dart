@@ -5,6 +5,8 @@ import 'package:frontend/features/items/data/mock_data.dart';
 import 'package:go_router/go_router.dart';
 
 
+import 'package:frontend/features/items/data/models/item_model.dart';
+
 class AdminItemListScreen extends StatefulWidget {
   const AdminItemListScreen({super.key});
 
@@ -21,12 +23,12 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredPosts {
+  List<Item> get _filteredPosts {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) return mockItems;
     return mockItems.where((item) {
-      final title = (item['title'] as String?)?.toLowerCase() ?? '';
-      final location = (item['location'] as String?)?.toLowerCase() ?? '';
+      final title = item.title.toLowerCase();
+      final location = item.location.toLowerCase();
       return title.contains(query) || location.contains(query);
     }).toList();
   }
@@ -105,9 +107,8 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     );
   }
 
-  Future<void> _deleteItem(Map<String, dynamic> item) async {
-    final id = item['id']?.toString();
-    if (id == null) return;
+  Future<void> _deleteItem(Item item) async {
+    final id = item.id;
 
     final confirm = await _showDeleteConfirmationDialog();
     if (!confirm) return;
@@ -191,7 +192,7 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     );
   }
 
-  Future<void> _showPostDetails(Map<String, dynamic> item) async {
+  Future<void> _showPostDetails(Item item) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -203,15 +204,15 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                (item['title'] as String?) ?? 'Untitled item',
+                item.title,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
               const SizedBox(height: 8),
-              Text((item['description'] as String?) ?? ''),
+              Text(item.description),
               const SizedBox(height: 14),
-              Text('Verification key: ${(item['verification_question'] as String?) ?? '-'}'),
+              Text('Verification key: ${item.verificationQuestion}'),
               const SizedBox(height: 4),
-              Text('Possible answer: ${(item['verification_answer'] as String?) ?? '-'}'),
+              Text('Possible answer: ${item.verificationAnswer}'),
               const SizedBox(height: 18),
             ],
           ),
@@ -220,7 +221,7 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     );
   }
 
-  Future<void> _openEditScreen(Map<String, dynamic> item, BuildContext context) async {
+  Future<void> _openEditScreen(Item item, BuildContext context) async {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => EditItemScreen(item: item)),
@@ -231,21 +232,21 @@ class _AdminItemListScreenState extends State<AdminItemListScreen> {
     }
   }
 
-  Widget _buildAdminCard(Map<String, dynamic> item, BuildContext context) {
+  Widget _buildAdminCard(Item item, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(item['image_url'], width: 70, height: 70, fit: BoxFit.cover)),
+          ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(item.imageUrl ?? '', width: 70, height: 70, fit: BoxFit.cover)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text((item['title'] as String?) ?? 'Untitled item', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text((item['location'] as String?) ?? 'Unknown location', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(item.location, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 8),
                 Row(
                   children: [

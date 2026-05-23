@@ -5,6 +5,8 @@ import 'package:frontend/features/items/presentation/widgets/discovery_top_bar.d
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/features/items/presentation/widgets/category_chip.dart';
 
+import 'package:frontend/features/items/data/models/item_model.dart';
+
 class ClaimsScreen extends StatefulWidget {
   const ClaimsScreen({super.key});
 
@@ -22,12 +24,12 @@ class _ClaimsScreenState extends State<ClaimsScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredItems {
+  List<Item> get _filteredItems {
     final query = _searchController.text.trim().toLowerCase();
     return mockItems.where((item) {
-      final title = (item['title'] as String?)?.toLowerCase() ?? '';
-      final location = (item['location'] as String?)?.toLowerCase() ?? '';
-      final category = (item['category'] as String?) ?? 'Other';
+      final title = item.title.toLowerCase();
+      final location = item.location.toLowerCase();
+      final category = item.category;
       final matchesQuery = query.isEmpty || title.contains(query) || location.contains(query);
       final matchesCategory = _selectedCategory == 'All' || category == _selectedCategory;
       return matchesQuery && matchesCategory;

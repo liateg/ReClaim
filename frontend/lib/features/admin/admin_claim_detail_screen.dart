@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../claims/data/mock/mock_claims.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
 import 'package:frontend/features/claims/data/model/claim_model.dart';
 import 'package:frontend/features/claims/enum/claim_status.dart';

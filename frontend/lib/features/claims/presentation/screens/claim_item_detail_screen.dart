@@ -191,13 +191,18 @@ class _ClaimItemDetailScreenState extends ConsumerState<ClaimItemDetailScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      final locationText = locationController.text.trim();
                       final newClaim = Claim(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: itemNameController.text.isNotEmpty ? itemNameController.text : 'New Claim',
+                        title: itemNameController.text.isNotEmpty
+                            ? itemNameController.text
+                            : 'New Claim',
                         description: descriptionController.text,
                         status: ClaimStatus.pending,
                         category: 'Others',
-                        location: 'Unknown',
+                        location:
+                            locationText.isNotEmpty ? locationText : 'Unknown',
+                        imageUrl: pickedImage?.path,
                         date: DateTime.now(),
                       );
                       

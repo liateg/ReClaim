@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
-import '../../data/mock/mock_claims.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+import '../widgets/claim_image_preview.dart';
 
 class ClaimDetailScreen extends ConsumerWidget {
   final String claimId;
@@ -35,18 +35,9 @@ class ClaimDetailScreen extends ConsumerWidget {
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),
               ),
-              child: AspectRatio(
-                aspectRatio: 16 / 10,
-                child: claim.imageUrl == null || claim.imageUrl!.isEmpty
-                    ? Container(
-                        color: AppTheme.grayBorder.withValues(alpha: 0.4),
-                        child: const Icon(
-                          Icons.image_outlined,
-                          size: 60,
-                          color: AppTheme.grayText,
-                        ),
-                      )
-                    : Image.network(claim.imageUrl!, fit: BoxFit.cover),
+              child: ClaimImagePreview(
+                imageUrl: claim.imageUrl,
+                placeholderIconSize: 60,
               ),
             ),
             const SizedBox(height: 16),

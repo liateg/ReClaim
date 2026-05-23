@@ -42,7 +42,7 @@ class CustomButton extends StatelessWidget {
             ),
             child: _buildChild(),
         );
-    return SizedBox(width: 150,child: button);
+    return SizedBox(width: double.infinity, child: button);
   }
   Widget _buildChild() {
     if (isLoading) {

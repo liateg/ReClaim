@@ -6,7 +6,7 @@ import 'package:frontend/core/session/app_session.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/utils/router/route_paths.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
-import 'package:frontend/features/auth/riverpod/auth_provider.dart';
+import 'package:frontend/features/auth/Riverpod/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});

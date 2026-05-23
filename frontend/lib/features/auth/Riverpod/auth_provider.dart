@@ -43,7 +43,7 @@ final registerProvider =
 
   final response = await service.register(fullName, email, password);
 
-  AppSession.signIn(
+  await AppSession.signIn(
     role: AppUserRole.user,
     email: response['user']['email'],
     displayName: response['user']['full_name'],
@@ -51,6 +51,10 @@ final registerProvider =
 
   await AppSession.saveToken(response['accessToken']);
   ref.invalidate(authProvider);
+  ref.invalidate(isAdminProvider);
+  ref.invalidate(currentUserRoleProvider);
+  ref.invalidate(userNameProvider);
+  ref.invalidate(userEmailProvider);
 });
 
 final logoutProvider = FutureProvider<void>((ref) async {

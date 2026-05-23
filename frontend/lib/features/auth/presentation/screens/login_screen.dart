@@ -5,7 +5,7 @@ import 'package:frontend/shared/widgets/custom_text_field.dart';
 import 'package:frontend/shared/widgets/custom_button.dart';
 import '../../../../utils/router/route_paths.dart';
 import '../../../../utils/theme/app_theme.dart';
-import '../../riverpod/auth_provider.dart';
+import 'package:frontend/features/auth/Riverpod/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -49,30 +49,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    await ref.read(loginProvider({
-      'email': _emailController.text,
-      'password': _passwordController.text,
-    }).future);
+    try {
+      await ref.read(loginProvider({
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      }).future);
 
-    final isLoggedIn = await ref.read(authProvider.future);
+      if (!mounted) return;
 
-    final isAdmin = ref.read(isAdminProvider);
+      final isLoggedIn = await ref.read(authProvider.future);
+      if (!mounted) return;
 
-    if (isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Welcome back, ${_emailController.text.split('@')[0]}!'),
-          backgroundColor: AppTheme.primaryGreenLight,
-        ),
-      );
+      final isAdmin = ref.read(isAdminProvider);
 
-      if (isAdmin) {
-        context.go(RoutePaths.adminDashboard);
+      if (isLoggedIn) {
+        if (isAdmin) {
+          context.go(RoutePaths.adminDashboard);
+        } else {
+          context.go(RoutePaths.home);
+        }
       } else {
-        context.go(RoutePaths.home);
+        setState(() {
+          _generalError = 'Invalid email or password. Please try again.';
+          _passwordError = 'Incorrect password';
+        });
       }
-    } else {
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
         _generalError = 'Invalid email or password. Please try again.';
         _passwordError = 'Incorrect password';

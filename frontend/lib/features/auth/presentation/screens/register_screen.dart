@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../utils/theme/app_theme.dart';
-import '../../riverpod/auth_provider.dart';
+import 'package:frontend/features/auth/Riverpod/auth_provider.dart';
 import '../../../../utils/router/route_paths.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -88,20 +88,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     try {
       await ref.read(registerProvider({
-        'fullName': _nameController.text,
-        'email': _emailController.text,
+        'fullName': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
         'password': _passwordController.text,
       }).future);
 
+      if (!mounted) return;
+
       final isLoggedIn = await ref.read(authProvider.future);
+      if (!mounted) return;
 
       if (isLoggedIn) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
         context.go(RoutePaths.home);
       } else {
         setState(() {
@@ -109,9 +106,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         });
       }
     } catch (e) {
-      print('8. Error caught: $e');
+      if (!mounted) return;
       setState(() {
-        _generalError = 'Registration failed: ${e.toString()}';
+        _generalError = 'Registration failed. Please try again.';
       });
     }
   }

@@ -4,7 +4,6 @@ import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 import './claim_empty.dart';
 import '../widgets/claim_card.dart';
-import '../../data/mock/mock_claims.dart';
 import 'claim_withdraw.dart';
 import 'claim_delete.dart';
 
@@ -49,10 +48,11 @@ class ClaimsScreen extends ConsumerWidget {
                 return ClaimCard(
                   claim: claimObj,
                   onWithdraw: () async {
-                    if (isPending) {
-                      await showClaimWithdrawDialog(context);
-                    } else {
-                      await showClaimDeleteDialog(context);
+                    final confirmed = isPending
+                        ? await showClaimWithdrawDialog(context)
+                        : await showClaimDeleteDialog(context);
+                    if (confirmed) {
+                      ref.read(claimProvider.notifier).removeClaim(claimObj.id);
                     }
                   },
                   onTap: () => context.go('/claims/${claimObj.id}'),
@@ -64,4 +64,4 @@ class ClaimsScreen extends ConsumerWidget {
       ),
     );
   }
-}
+}

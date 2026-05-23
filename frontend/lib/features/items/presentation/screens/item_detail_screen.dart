@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/features/items/data/mock_data.dart';
 import '../widgets/claim_submission_content.dart';
 
+import 'package:frontend/features/items/data/models/item_model.dart';
+
 class ClaimDetailScreen extends StatelessWidget {
   final String claimId; 
 
@@ -9,8 +11,8 @@ class ClaimDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final item = mockItems.cast<Map<String, dynamic>?>().firstWhere(
-      (e) => e?['id'] == claimId,
+    final item = mockItems.cast<Item?>().firstWhere(
+      (e) => e?.id == claimId,
       orElse: () => null,
     );
     if (item == null) {
@@ -24,19 +26,19 @@ class ClaimDetailScreen extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: Image.network(item['image_url'], height: 250, fit: BoxFit.cover), //
+            child: Image.network(item.imageUrl ?? '', height: 250, fit: BoxFit.cover), //
           ),
           const SizedBox(height: 20),
           Text(
-            (item['title'] as String?) ?? 'Untitled item',
+            item.title,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           Text(
-            (item['location'] as String?) ?? 'Unknown location',
+            item.location,
             style: const TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 20),
-          Text((item['description'] as String?) ?? ''),
+          Text(item.description),
           const SizedBox(height: 30),
           SizedBox(
             width: double.infinity,

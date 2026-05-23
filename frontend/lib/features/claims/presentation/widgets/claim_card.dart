@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 
 import 'package:frontend/features/claims/data/model/claim_model.dart';
+import 'claim_image_preview.dart';
 
 class ClaimCard extends StatelessWidget {
   final Claim claim;
@@ -70,19 +71,7 @@ class ClaimCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: AspectRatio(
-                  aspectRatio: 16 / 10,
-                  child: imageUrl == null || imageUrl.isEmpty
-                      ? Container(
-                          color: AppTheme.grayBorder.withValues(alpha: 0.45),
-                          child: const Icon(
-                            Icons.image_outlined,
-                            size: 44,
-                            color: AppTheme.grayText,
-                          ),
-                        )
-                      : Image.network(imageUrl, fit: BoxFit.cover),
-                ),
+                child: ClaimImagePreview(imageUrl: imageUrl),
               ),
               const SizedBox(height: 12),
               Container(

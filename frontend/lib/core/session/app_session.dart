@@ -53,6 +53,7 @@ class AppSession {
     await _storage.delete(key: 'role');
     await _storage.delete(key: 'email');
     await _storage.delete(key: 'name');
+    await clearToken();
   }
 
   // Check if user is logged in

@@ -1,15 +1,83 @@
-class ItemModel {
- 
-  static const String keyId = 'id';
-  static const String keyTitle = 'title';
-  static const String keyDesc = 'description';
-  static const String keyLocation = 'location';
-  static const String keyImage = 'image_url';
-  static const String keyStatus = 'status';
-  static const String keyQuestion = 'verification_question';
-  static const String keyAnswer = 'verification_answer';
-  static const String keyDate = 'date_found';
+class Item {
+  final String id;
+  final String title;
+  final String description;
+  final String location;
+  final String? imageUrl;
+  final String status;
+  final String verificationQuestion;
+  final String verificationAnswer;
+  final DateTime dateFound;
+  final String category;
 
+  Item({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.location,
+    this.imageUrl,
+    this.status = 'available',
+    required this.verificationQuestion,
+    required this.verificationAnswer,
+    required this.dateFound,
+    this.category = 'Other',
+  });
 
-  static const String placeholderImage = "https://via.placeholder.com/400x200?text=No+Image+Available";
+  Item copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? location,
+    String? imageUrl,
+    String? status,
+    String? verificationQuestion,
+    String? verificationAnswer,
+    DateTime? dateFound,
+    String? category,
+  }) {
+    return Item(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      location: location ?? this.location,
+      imageUrl: imageUrl ?? this.imageUrl,
+      status: status ?? this.status,
+      verificationQuestion: verificationQuestion ?? this.verificationQuestion,
+      verificationAnswer: verificationAnswer ?? this.verificationAnswer,
+      dateFound: dateFound ?? this.dateFound,
+      category: category ?? this.category,
+    );
+  }
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? 'Untitled item',
+      description: json['description']?.toString() ?? '',
+      location: json['location']?.toString() ?? 'Unknown location',
+      imageUrl: json['image_url']?.toString(),
+      status: json['status']?.toString() ?? 'available',
+      verificationQuestion: json['verification_question']?.toString() ?? '',
+      verificationAnswer: json['verification_answer']?.toString() ?? '',
+      dateFound: json['date_found'] != null
+          ? DateTime.tryParse(json['date_found'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      category: json['category']?.toString() ?? 'Other',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'location': location,
+      'image_url': imageUrl,
+      'status': status,
+      'verification_question': verificationQuestion,
+      'verification_answer': verificationAnswer,
+      'date_found': dateFound.toIso8601String(),
+      'category': category,
+    };
+  }
 }

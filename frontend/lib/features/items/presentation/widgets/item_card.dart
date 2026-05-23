@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:frontend/features/items/data/models/item_model.dart';
+
 class ItemCard extends StatelessWidget {
-  final Map<String, dynamic> item;
+  final Item item;
   final bool isAdmin;
 
   const ItemCard({super.key, required this.item, this.isAdmin = false});
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = (item['image_url'] as String?) ?? '';
-    final title = (item['title'] as String?) ?? 'Untitled item';
-    final location = (item['location'] as String?) ?? 'Unknown location';
-    final status = (item['status'] as String?) ?? 'available';
-    final itemId = item['id'];
+    final imageUrl = item.imageUrl ?? '';
+    final title = item.title;
+    final location = item.location;
+    final status = item.status;
+    final itemId = item.id;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

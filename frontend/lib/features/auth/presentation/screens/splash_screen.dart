@@ -1,10 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import '../../../../utils/router/route_paths.dart';
+import '../../Riverpod/auth_provider.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  Future<void> _checkStatus() async {
+    // Small delay for branding
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    
+    final isLoggedIn = await ref.read(authProvider.future);
+    if (isLoggedIn) {
+      final isAdmin = ref.read(isAdminProvider);
+      if (isAdmin) {
+        context.go(RoutePaths.adminDashboard);
+      } else {
+        context.go(RoutePaths.home);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +57,7 @@ class SplashScreen extends StatelessWidget {
                           border:
                               Border.all(color: Colors.transparent, width: 1),
                           borderRadius: BorderRadius.circular(35),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
                               blurRadius: 6,
@@ -36,7 +66,7 @@ class SplashScreen extends StatelessWidget {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadiusGeometry.circular(35),
+                          borderRadius: BorderRadius.circular(35),
                           child: Image.asset(
                             'assets/images/img_1.png',
                             width: 300,
@@ -53,7 +83,7 @@ class SplashScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white, width: 2),
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
                                 color: Colors.black26,
                                 blurRadius: 6,
@@ -62,7 +92,7 @@ class SplashScreen extends StatelessWidget {
                             ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadiusGeometry.circular(8),
+                            borderRadius: BorderRadius.circular(8),
                             child: Image.asset(
                               'assets/images/img.png',
                               width: 120,
