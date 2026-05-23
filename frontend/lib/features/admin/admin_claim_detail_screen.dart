@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../claims/data/mock/mock_claims.dart';
-import '../claims/data/model/claim_model.dart';
-import '../claims/enum/claim_status.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+import 'package:frontend/features/claims/data/model/claim_model.dart';
+import 'package:frontend/features/claims/enum/claim_status.dart';
 import '../../shared/widgets/appbar.dart';
 import '../../utils/theme/app_theme.dart';
-import 'data/admin_claim_review_mock.dart';
+import 'package:frontend/features/admin/data/admin_claim_review_mock.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AdminClaimDetailScreen extends StatelessWidget {
+class AdminClaimDetailScreen extends ConsumerWidget {
   final String claimId;
 
   const AdminClaimDetailScreen({super.key, required this.claimId});
 
   @override
-  Widget build(BuildContext context) {
-    final Claim claim = mockClaims.firstWhere(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimState = ref.watch(claimProvider);
+    final Claim claim = claimState.claims.firstWhere(
       (c) => c.id == claimId,
-      orElse: () => mockClaims.first,
+      orElse: () => claimState.claims.first,
     );
     final x = adminClaimReviewExtrasFor(claim);
     final statusLabel = switch (claim.status) {
@@ -233,15 +236,18 @@ class AdminClaimDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+                        const SizedBox(height: 28),
             Row(
               children: [
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () {
+                      ref.read(claimProvider.notifier).updateClaim(
+                            claim.copyWith(status: ClaimStatus.approved),
+                          );
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Claim confirmed (mock).'),
+                          content: Text('Claim confirmed.'),
                           backgroundColor: Color(0xFF003925),
                         ),
                       );
@@ -269,9 +275,12 @@ class AdminClaimDetailScreen extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
+                      ref.read(claimProvider.notifier).updateClaim(
+                            claim.copyWith(status: ClaimStatus.rejected),
+                          );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Claim denied (mock).'),
+                          content: const Text('Claim denied.'),
                           backgroundColor: Colors.grey.shade800,
                         ),
                       );

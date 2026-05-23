@@ -1,4 +1,5 @@
 import '../model/claim_model.dart';
+import '../../enum/claim_status.dart';
 
 final List<Claim> mockClaims = [
   Claim(
@@ -8,14 +9,7 @@ final List<Claim> mockClaims = [
     description: 'My Dell charger was left near the reading desks.',
     imageUrl: 'https://picsum.photos/400/250?random=1',
     location: 'Library - 2nd Floor',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Electronics",
-      "description": "x",
-      "status": "pending",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.pending,
     date: DateTime.now(),
   ),
   Claim(
@@ -25,14 +19,7 @@ final List<Claim> mockClaims = [
     description: 'Blue student ID card with lanyard was misplaced.',
     imageUrl: 'https://picsum.photos/400/250?random=2',
     location: 'Campus Cafeteria',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Accessories",
-      "description": "x",
-      "status": "approved",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.approved,
     date: DateTime.now(),
   ),
   Claim(
@@ -42,14 +29,7 @@ final List<Claim> mockClaims = [
     description: 'White AirPods case with one earbud missing.',
     imageUrl: 'https://picsum.photos/400/250?random=3',
     location: 'Main Bus Stop',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Electronics",
-      "description": "x",
-      "status": "rejected",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.rejected,
     date: DateTime.now(),
   ),
   Claim(
@@ -59,14 +39,7 @@ final List<Claim> mockClaims = [
     description: 'Black spiral notebook with MATH 201 notes.',
     imageUrl: 'https://picsum.photos/400/250?random=4',
     location: 'Engineering Block - Room 307',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Accessories",
-      "description": "x",
-      "status": "pending",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.pending,
     date: DateTime.now().subtract(const Duration(days: 1)),
   ),
   Claim(
@@ -76,14 +49,7 @@ final List<Claim> mockClaims = [
     description: 'Hardcover textbook with name written on first page.',
     imageUrl: 'https://picsum.photos/400/250?random=5',
     location: 'Science Lab Lobby',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Accessories",
-      "description": "x",
-      "status": "approved",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.approved,
     date: DateTime.now().subtract(const Duration(days: 2)),
   ),
   Claim(
@@ -93,14 +59,7 @@ final List<Claim> mockClaims = [
     description: 'Grey calculator with sticker on the back.',
     imageUrl: 'https://picsum.photos/400/250?random=6',
     location: 'Exam Hall B',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Electronics",
-      "description": "x",
-      "status": "pending",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.pending,
     date: DateTime.now().subtract(const Duration(days: 3)),
   ),
   Claim(
@@ -110,14 +69,7 @@ final List<Claim> mockClaims = [
     description: '32GB black USB drive containing class presentations.',
     imageUrl: 'https://picsum.photos/400/250?random=7',
     location: 'Computer Lab 2',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Electronics",
-      "description": "x",
-      "status": "rejected",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.rejected,
     date: DateTime.now().subtract(const Duration(days: 4)),
   ),
   Claim(
@@ -127,14 +79,7 @@ final List<Claim> mockClaims = [
     description: 'Canvas pouch with pens, highlighters, and eraser.',
     imageUrl: 'https://picsum.photos/400/250?random=8',
     location: 'Business School - Lecture Hall A',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Accessories",
-      "description": "x",
-      "status": "pending",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.pending,
     date: DateTime.now().subtract(const Duration(days: 5)),
   ),
   Claim(
@@ -144,14 +89,7 @@ final List<Claim> mockClaims = [
     description: 'Silver tablet used for note-taking during lectures.',
     imageUrl: 'https://picsum.photos/400/250?random=9',
     location: 'Central Auditorium',
-    status: Claim.fromJson({
-      "id": "x",
-      "title": "x",
-      "category": "Electronics",
-      "description": "x",
-      "status": "approved",
-      "date": DateTime.now().toIso8601String(),
-    }).status,
+    status: ClaimStatus.approved,
     date: DateTime.now().subtract(const Duration(days: 6)),
   ),
 ];

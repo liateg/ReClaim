@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 
+import 'package:frontend/features/claims/data/model/claim_model.dart';
+
 class ClaimCard extends StatelessWidget {
-  final Map<String, dynamic> claim;
+  final Claim claim;
   final VoidCallback? onWithdraw;
   final VoidCallback? onTap;
 
@@ -48,12 +50,11 @@ class ClaimCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = claim['imageUrl'] as String?;
-    final status = (claim['status'] as String?) ?? 'Pending';
-    final title = (claim['title'] as String?) ?? 'Untitled Claim';
-    final description = (claim['description'] as String?) ?? '';
-    final date =
-        (claim['date'] as String?) ?? (claim['filedDate'] as String?) ?? '';
+    final imageUrl = claim.imageUrl;
+    final status = claim.status.name.toUpperCase();
+    final title = claim.title;
+    final description = claim.description;
+    final date = claim.date.toString().split(' ')[0];
 
     return GestureDetector(
       onTap: onTap,

@@ -8,12 +8,18 @@ import '../../data/mock/mock_claims.dart';
 import 'claim_withdraw.dart';
 import 'claim_delete.dart';
 
-class ClaimsScreen extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+
+class ClaimsScreen extends ConsumerWidget {
   const ClaimsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    if (mockClaims.isEmpty) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimState = ref.watch(claimProvider);
+    final claims = claimState.claims;
+
+    if (claims.isEmpty) {
       return const ClaimEmptyScreen();
     }
 
@@ -34,31 +40,15 @@ class ClaimsScreen extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: mockClaims.length,
+              itemCount: claims.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
-                final claimObj = mockClaims[index];
-
-                final claimMap = {
-                  'id': claimObj.id,
-                  'title': claimObj.title,
-                  'description': claimObj.description,
-                  'date': claimObj.date.toString().split(' ')[0],
-                  'status': claimObj.status
-                      .toString()
-                      .split('.')
-                      .last
-                      .toUpperCase(),
-                  'imageUrl': claimObj.imageUrl ?? '',
-                  'filedDate': claimObj.date.toString().split(' ')[0],
-                };
-                final status = claimMap['status'] ?? 'PENDING';
-                final isPending = status == 'PENDING';
+                final claimObj = claims[index];
+                final isPending = claimObj.status.name.toLowerCase() == 'pending';
 
                 return ClaimCard(
-                  claim: claimMap,
+                  claim: claimObj,
                   onWithdraw: () async {
-                   
                     if (isPending) {
                       await showClaimWithdrawDialog(context);
                     } else {
@@ -74,4 +64,4 @@ class ClaimsScreen extends StatelessWidget {
       ),
     );
   }
-}
+}

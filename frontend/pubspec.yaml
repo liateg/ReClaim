@@ -17,8 +17,9 @@ dependencies:
   go_router: ^8.0.0
   image_picker: ^1.0.0
   google_fonts: ^6.3.0
-  flutter_riverpod: ^3.3.1
-  riverpod_annotation: ^4.0.2
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  state_notifier: ^1.0.0
   dio: ^5.4.0
   flutter_secure_storage: ^9.0.0
 

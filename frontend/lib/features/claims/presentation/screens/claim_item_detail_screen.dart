@@ -4,17 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+import 'package:frontend/features/claims/data/model/claim_model.dart';
+import 'package:frontend/features/claims/enum/claim_status.dart';
 
-class ClaimItemDetailScreen extends StatefulWidget {
+class ClaimItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
 
   const ClaimItemDetailScreen({super.key, required this.itemId});
 
   @override
-  State<ClaimItemDetailScreen> createState() => _ClaimItemDetailScreenState();
+  ConsumerState<ClaimItemDetailScreen> createState() => _ClaimItemDetailScreenState();
 }
 
-class _ClaimItemDetailScreenState extends State<ClaimItemDetailScreen> {
+class _ClaimItemDetailScreenState extends ConsumerState<ClaimItemDetailScreen> {
   late final TextEditingController itemNameController;
   late final TextEditingController descriptionController;
   late final TextEditingController locationController;
@@ -187,6 +191,18 @@ class _ClaimItemDetailScreenState extends State<ClaimItemDetailScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      final newClaim = Claim(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: itemNameController.text.isNotEmpty ? itemNameController.text : 'New Claim',
+                        description: descriptionController.text,
+                        status: ClaimStatus.pending,
+                        category: 'Others',
+                        location: 'Unknown',
+                        date: DateTime.now(),
+                      );
+                      
+                      ref.read(claimProvider.notifier).addClaim(newClaim);
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Claim submitted!')),
                       );

@@ -8,14 +8,17 @@ import '../claims/presentation/widgets/admin.claim_card.dart';
 import '../../shared/widgets/appbar.dart';
 import '../../utils/theme/app_theme.dart';
 
-class AdminClaimsScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+
+class AdminClaimsScreen extends ConsumerStatefulWidget {
   const AdminClaimsScreen({super.key});
 
   @override
-  State<AdminClaimsScreen> createState() => _AdminClaimsScreenState();
+  ConsumerState<AdminClaimsScreen> createState() => _AdminClaimsScreenState();
 }
 
-class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
+class _AdminClaimsScreenState extends ConsumerState<AdminClaimsScreen> {
   static const Color _bg = Color(0xFFFEF9F2);
   static const Color _green = Color(0xFF003925);
   static const Color _muted = Color(0xFF404943);
@@ -31,7 +34,9 @@ class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
 
   List<Claim> get _filtered {
     final q = _search.text.trim().toLowerCase();
-    return mockClaims.where((c) {
+    final allClaims = ref.watch(claimProvider).claims;
+    
+    return allClaims.where((c) {
       if (_pendingOnly && c.status != ClaimStatus.pending) return false;
       if (q.isEmpty) return true;
       return c.title.toLowerCase().contains(q) ||

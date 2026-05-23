@@ -4,22 +4,24 @@ import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import '../../data/mock/mock_claims.dart';
 
-class ClaimDetailScreen extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/claims/Riverpod/claim_provider.dart';
+
+class ClaimDetailScreen extends ConsumerWidget {
   final String claimId;
 
   const ClaimDetailScreen({super.key, required this.claimId});
 
   @override
-  Widget build(BuildContext context) {
-    final claim = mockClaims.firstWhere(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimState = ref.watch(claimProvider);
+    final claim = claimState.claims.firstWhere(
       (c) => c.id == claimId,
-      orElse: () => mockClaims.first,
+      orElse: () => claimState.claims.first,
     );
 
-    final isApproved =
-        claim.status.toString().split('.').last.toUpperCase() == 'APPROVED';
-
-    final status = claim.status.toString().split('.').last.toUpperCase();
+    final isApproved = claim.status.name.toLowerCase() == 'approved';
+    final status = claim.status.name.toUpperCase();
 
     return Scaffold(
       backgroundColor: AppTheme.detailScreenBackground,
@@ -28,7 +30,6 @@ class ClaimDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-           
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(20),
@@ -48,16 +49,12 @@ class ClaimDetailScreen extends StatelessWidget {
                     : Image.network(claim.imageUrl!, fit: BoxFit.cover),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -95,10 +92,7 @@ class ClaimDetailScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
-                 
                   Text(
                     claim.description,
                     style: const TextStyle(
@@ -107,10 +101,7 @@ class ClaimDetailScreen extends StatelessWidget {
                       color: AppTheme.descriptionText,
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
-                
                   const Text(
                     "REPORT ID",
                     style: TextStyle(
@@ -121,11 +112,10 @@ class ClaimDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    "#RC-992-8810",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  Text(
+                    "#RC-992-${claim.id.padLeft(4, '0')}",
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
-
                   if (isApproved) ...[
                     const SizedBox(height: 20),
                     const Text(
@@ -151,10 +141,7 @@ class ClaimDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-
                   const SizedBox(height: 25),
-
-               
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
@@ -208,10 +195,7 @@ class ClaimDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -231,7 +215,6 @@ class ClaimDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
                 ],
               ),
