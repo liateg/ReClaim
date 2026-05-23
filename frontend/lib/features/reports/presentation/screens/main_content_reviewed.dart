@@ -107,7 +107,6 @@ class FeedbacksReviewedScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Row(
         children: [
-        
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
             decoration: ShapeDecoration(
@@ -129,7 +128,6 @@ class FeedbacksReviewedScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-       
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
             decoration: ShapeDecoration(
@@ -151,7 +149,6 @@ class FeedbacksReviewedScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-        
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
             decoration: ShapeDecoration(
@@ -250,7 +247,8 @@ class FeedbacksReviewedScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFD2E8D9),
                   borderRadius: BorderRadius.circular(6),

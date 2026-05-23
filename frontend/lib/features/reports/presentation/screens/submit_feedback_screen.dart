@@ -1,30 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../Riverpod/report_provider.dart';
+import 'feedback_submitted_success.dart';
 
-class SubmitFeedbackScreen extends StatefulWidget {
-  const SubmitFeedbackScreen({super.key});
+class SubmitFeedbackScreen extends ConsumerStatefulWidget {
+  final String? itemId;
+  final String? claimId;
+
+  const SubmitFeedbackScreen({
+    super.key,
+    this.itemId,
+    this.claimId,
+  });
 
   @override
-  State<SubmitFeedbackScreen> createState() => _SubmitFeedbackScreenState();
+  ConsumerState<SubmitFeedbackScreen> createState() =>
+      _SubmitFeedbackScreenState();
 }
 
-class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
-
-  static const Color kBg        = Color(0xFFFEF9F2);
-  static const Color kHeaderBg  = Color(0xCCFEF9F2);
+class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
+  static const Color kBg = Color(0xFFFEF9F2);
+  static const Color kHeaderBg = Color(0xCCFEF9F2);
   static const Color kDarkGreen = Color(0xFF003925);
-  static const Color kCardBg    = Color(0xFFF8F3EC);
-  static const Color kInputBg   = Color(0xFFE6E2DB);
-  static const Color kBorder    = Color(0x26C0C9C1);
-  static const Color kTextDark  = Color(0xFF1D1C18);
-  static const Color kTextBody  = Color(0xFF404943);
-  static const Color kHint      = Color(0x99404943);
-  static const Color kShadow    = Color(0x0F1D1C18);
-  static const Color kError     = Color(0xFFD94040);
+  static const Color kCardBg = Color(0xFFF8F3EC);
+  static const Color kInputBg = Color(0xFFE6E2DB);
+  static const Color kBorder = Color(0x26C0C9C1);
+  static const Color kTextDark = Color(0xFF1D1C18);
+  static const Color kTextBody = Color(0xFF404943);
+  static const Color kHint = Color(0x99404943);
+  static const Color kShadow = Color(0x0F1D1C18);
+  static const Color kError = Color(0xFFD94040);
 
-  int  _starRating   = 0;
-  bool _starError    = false;
+  int _starRating = 0;
+  bool _starError = false;
   bool _commentError = false;
-  bool _submitted    = false;
+  bool _isSubmitting = false;
 
   final TextEditingController _commentsController = TextEditingController();
 
@@ -33,7 +43,6 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
     _commentsController.dispose();
     super.dispose();
   }
-
 
   TextStyle _manrope({
     required double size,
@@ -52,18 +61,25 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
     );
   }
 
-  void _onSubmit() {
-    final bool noStar    = _starRating == 0;
+  String _getReasonFromRating(int rating) {
+    if (rating <= 2) return 'other';
+    if (rating == 3) return 'spam';
+    if (rating >= 4) return 'fake';
+    return 'other';
+  }
+
+  Future<void> _onSubmit() async {
+    final bool noStar = _starRating == 0;
     final bool noComment = _commentsController.text.trim().isEmpty;
 
     setState(() {
-      _starError    = noStar;
+      _starError = noStar;
       _commentError = noComment;
     });
 
     if (noStar || noComment) {
       final missing = <String>[];
-      if (noStar)    missing.add('a star rating');
+      if (noStar) missing.add('a star rating');
       if (noComment) missing.add('your comments');
 
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -83,42 +99,64 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
           ),
           backgroundColor: kError,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 3),
         ),
       );
       return;
     }
 
-    setState(() => _submitted = true);
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Thank you for your feedback!',
-                style: _manrope(size: 14, color: Colors.white),
+    setState(() => _isSubmitting = true);
+
+    try {
+      // Call Riverpod to create report
+      await ref.read(createReportProvider({
+        'itemId': widget.itemId,
+        'claimId': widget.claimId,
+        'reason': _getReasonFromRating(_starRating),
+        'description': _commentsController.text.trim(),
+      }).future);
+
+      if (mounted) {
+        // Navigate to success screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const FeedbackSuccessScreen()),
+        );
+      }
+    } catch (e) {
+      setState(() => _isSubmitting = false);
+
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Failed to submit: ${e.toString().replaceAll('Exception: ', '')}',
+                  style: _manrope(size: 14, color: Colors.white),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: kError,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
         ),
-        backgroundColor: kDarkGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+      );
+    }
   }
 
   void _onStarTap(int index) {
     setState(() {
       _starRating = index + 1;
-      _starError  = false;
-      _submitted  = false;
+      _starError = false;
     });
   }
 
@@ -139,7 +177,8 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 24, right: 24, bottom: 14),
+                  padding:
+                      const EdgeInsets.only(left: 24, right: 24, bottom: 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -169,7 +208,9 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: const BoxDecoration(
         color: kHeaderBg,
-        boxShadow: [BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))],
+        boxShadow: [
+          BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -185,7 +226,8 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(9999)),
                     ),
                   ),
-                  child: const Icon(Icons.arrow_back, color: kDarkGreen, size: 20),
+                  child:
+                      const Icon(Icons.arrow_back, color: kDarkGreen, size: 20),
                 ),
               ),
               const SizedBox(width: 16),
@@ -217,7 +259,6 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
     );
   }
 
-  
   Widget _buildItemCard() {
     return Container(
       width: double.infinity,
@@ -229,7 +270,9 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
           side: const BorderSide(width: 1, color: kBorder),
           borderRadius: BorderRadius.circular(12),
         ),
-        shadows: const [BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))],
+        shadows: const [
+          BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -240,9 +283,11 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
             clipBehavior: Clip.antiAlias,
             decoration: ShapeDecoration(
               color: kInputBg,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Icon(Icons.image_outlined, color: Color(0xFF8A9490), size: 36),
+            child: const Icon(Icons.image_outlined,
+                color: Color(0xFF8A9490), size: 36),
           ),
           const SizedBox(width: 24),
           Expanded(
@@ -274,7 +319,6 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
       ),
     );
   }
-
 
   Widget _buildStarSection() {
     return Column(
@@ -333,7 +377,6 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
     );
   }
 
-
   Widget _buildCommentsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,7 +411,9 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
                   : BorderSide.none,
               borderRadius: BorderRadius.circular(12),
             ),
-            shadows: const [BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))],
+            shadows: const [
+              BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))
+            ],
           ),
           child: TextField(
             controller: _commentsController,
@@ -384,7 +429,10 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(
-                top: 16, left: 16, right: 16, bottom: 88,
+                top: 16,
+                left: 16,
+                right: 16,
+                bottom: 88,
               ),
             ),
           ),
@@ -406,7 +454,6 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
     );
   }
 
-
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
@@ -419,26 +466,38 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
             end: Alignment(0.53, -0.47),
             colors: [Color(0xFF003925), Color(0xFF1D503A)],
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          shadows: const [BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))],
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shadows: const [
+            BoxShadow(color: kShadow, blurRadius: 32, offset: Offset(0, 12))
+          ],
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: _submitted ? null : _onSubmit,
+            onTap: _isSubmitting ? null : _onSubmit,
             borderRadius: BorderRadius.circular(12),
             splashColor: Colors.white.withOpacity(0.1),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              child: Text(
-                _submitted ? 'Feedback Submitted ✓' : 'Submit Feedback',
-                textAlign: TextAlign.center,
-                style: _manrope(
-                  size: 16,
-                  weight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'Submit Feedback',
+                      textAlign: TextAlign.center,
+                      style: _manrope(
+                        size: 16,
+                        weight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ),

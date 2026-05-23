@@ -10,18 +10,23 @@ import '../../features/admin/admin_items_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
-import '../../features/claims/presentation/screens/claim_detail_screen.dart' as claims_detail;
+import '../../features/claims/presentation/screens/claim_detail_screen.dart'
+    as claims_detail;
 import '../../features/claims/presentation/screens/claim_empty.dart';
 import '../../features/claims/presentation/screens/claim_item_detail_screen.dart';
-import '../../features/claims/presentation/screens/claim_screen.dart' as claims_pages;
+import '../../features/claims/presentation/screens/claim_screen.dart'
+    as claims_pages;
 import '../../features/items/presentation/screens/admin_item_list_screen.dart';
-import '../../features/items/presentation/screens/claim_item_screen.dart' as item_discovery;
+import '../../features/items/presentation/screens/claim_item_screen.dart'
+    as item_discovery;
 import '../../features/items/presentation/screens/create_item_screen.dart';
-import '../../features/items/presentation/screens/item_detail_screen.dart' as item_pages;
+import '../../features/items/presentation/screens/item_detail_screen.dart'
+    as item_pages;
 import '../../features/profile/profile_screen.dart';
 import '../../features/reports/reports_screen.dart';
-import '../../features/reports/data/mock/mock_feedback_reports.dart';
-import '../../features/reports/presentation/screens/adminPages/admin_report.dart' as admin_reports_v2;
+import '../../features/reports/data/model/report_model.dart';
+import '../../features/reports/presentation/screens/adminPages/admin_report.dart'
+    as admin_reports_v2;
 import '../../features/reports/presentation/screens/adminPages/admin_report_details.dart';
 import '../../features/reports/presentation/screens/adminPages/admin_reports_all_screen.dart';
 import 'route_paths.dart';
@@ -136,14 +141,8 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: ':id',
               builder: (context, state) {
-                final extra = state.extra;
-                final report = extra is FeedbackReportMock
-                    ? extra
-                    : kMockFeedbackReports.firstWhere(
-                        (e) => e.id == state.pathParameters['id'],
-                        orElse: () => kMockFeedbackReports.first,
-                      );
-                return AdminReportsDetailScreen(report: report);
+                final report = state.extra;
+                return AdminReportsDetailScreen(report: report as Report);
               },
             ),
           ],
