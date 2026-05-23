@@ -6,6 +6,7 @@ import itemsRoutes from "./features/items/items.routes.js";
 import claimsRoutes from "./features/claims/claims.routes.js";
 import uploadRoutes from "./features/upload/upload.routes.js";
 import notificationsRoutes from "./features/notifications/notifications.routes.js";
+import reportsRoutes from "./features/reports/reports.routes.js";
 import path from "path";
 
 const app = express();
@@ -42,5 +43,6 @@ app.use("/items", itemsRoutes);
 app.use("/claims", claimsRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/notifications", notificationsRoutes);
+app.use("/reports", reportsRoutes);
 
 export default app;

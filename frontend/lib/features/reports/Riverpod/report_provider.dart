@@ -1,9 +1,12 @@
-// lib/features/reports/riverpod/report_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../reports/data/models/report_model.dart';
-import '../../reports/data/services/report_service.dart';
+import '../../../core/api/dio_client.dart';
+import '../data/models/report_model.dart';
+import '../data/services/report_service.dart';
 
-final reportServiceProvider = Provider((ref) => ReportService());
+final reportServiceProvider = Provider((ref) {
+  final dio = ref.watch(dioClientProvider);
+  return ReportService(dio);
+});
 
 final myReportsProvider = FutureProvider<List<Report>>((ref) async {
   final service = ref.read(reportServiceProvider);

@@ -35,6 +35,19 @@ interface Notification {
   createdAt: string;
 }
 
+interface Report {
+  id: number;
+  reporterId: number;
+  itemId?: number | undefined;
+  claimId?: number | undefined;
+  reason: "fake" | "spam" | "wrong_owner" | "other";
+  description?: string | undefined;
+  status: "pending" | "under_review" | "resolved" | "rejected";
+  adminNote?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class MemoryStore {
   private items: Item[] = [
     {
@@ -85,10 +98,12 @@ class MemoryStore {
   ];
 
   private notifications: Notification[] = [];
+  private reports: Report[] = [];
 
   private itemIdCounter = 3;
   private claimIdCounter = 2;
   private notificationIdCounter = 1;
+  private reportIdCounter = 1;
 
   // Notifications
   getNotificationsByUser(userId: number) {
@@ -177,6 +192,39 @@ class MemoryStore {
     const index = this.claims.findIndex(c => c.id === id);
     if (index === -1) return false;
     this.claims.splice(index, 1);
+    return true;
+  }
+
+  // Reports
+  getReports() { return this.reports; }
+  getReportsByUser(userId: number) { return this.reports.filter(r => r.reporterId === userId); }
+  getReportById(id: number) { return this.reports.find(r => r.id === id); }
+  createReport(reportData: Partial<Report>) {
+    const newReport: Report = {
+      id: this.reportIdCounter++,
+      reporterId: reportData.reporterId!,
+      itemId: reportData.itemId,
+      claimId: reportData.claimId,
+      reason: reportData.reason ?? "other",
+      description: reportData.description,
+      status: reportData.status ?? "pending",
+      adminNote: reportData.adminNote,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.reports.push(newReport);
+    return newReport;
+  }
+  updateReport(id: number, updates: Partial<Report>) {
+    const index = this.reports.findIndex(r => r.id === id);
+    if (index === -1) return null;
+    this.reports[index] = { ...this.reports[index], ...updates, updatedAt: new Date().toISOString() } as Report;
+    return this.reports[index];
+  }
+  deleteReport(id: number) {
+    const index = this.reports.findIndex(r => r.id === id);
+    if (index === -1) return false;
+    this.reports.splice(index, 1);
     return true;
   }
 }
