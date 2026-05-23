@@ -1,3 +1,5 @@
+import 'package:frontend/features/items/data/items_service.dart';
+
 final List<Map<String, dynamic>> mockItems = [
   {
     'id': '1',
@@ -58,6 +60,8 @@ void addMockItem({
     'verification_answer': verificationAnswer,
     'image_url': imageUrl,
   });
+  // Invalidate items list cache after adding
+  ItemsService().invalidateItemCache();
 }
 
 bool updateMockItem({
@@ -93,6 +97,8 @@ bool updateMockItem({
 bool removeMockItem(String id) {
   final before = mockItems.length;
   mockItems.removeWhere((item) => item['id'] == id);
+  // Invalidate caches for list and this item id
+  ItemsService().invalidateItemCache(id: id);
   return mockItems.length < before;
 }
 
