@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class FeedbackSuccessScreen extends StatelessWidget {
   const FeedbackSuccessScreen({super.key});
@@ -65,11 +66,7 @@ class FeedbackSuccessScreen extends StatelessWidget {
                   _buildSecondaryLink(
                     label: 'Return to Dashboard',
                     onTap: () {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/dashboard',
-                        (route) => false,
-                      );
+                      context.go('/home');
                     },
                   ),
                   const SizedBox(height: 80),

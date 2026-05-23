@@ -21,6 +21,7 @@ class _AdminReportsDetailScreenState
     extends ConsumerState<AdminReportsDetailScreen> {
   late final TextEditingController _notesController;
   bool _isUpdating = false;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -41,7 +42,7 @@ class _AdminReportsDetailScreenState
 
     try {
       await ref.read(updateReportStatusProvider({
-        'id': widget.report.id,
+        'id': widget.report.id.toString(),
         'status': status,
         'adminNote': adminNote ?? _notesController.text.trim(),
       }).future);
@@ -53,6 +54,8 @@ class _AdminReportsDetailScreenState
             backgroundColor: Colors.green,
           ),
         );
+        ref.invalidate(allReportsProvider);
+        ref.invalidate(myReportsProvider);
         Navigator.pop(context, 'updated');
       }
     } catch (e) {
@@ -68,27 +71,26 @@ class _AdminReportsDetailScreenState
   }
 
   Future<void> _deleteReport() async {
-    // Note: You'll need a delete endpoint in your backend
-    // For now, just show confirmation
-    showDialog(
+    print('Delete button pressed');
+
+    final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Report'),
         content: const Text(
             'Are you sure you want to delete this report? This action cannot be undone.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () {
+              print('Cancel pressed');
+              Navigator.pop(dialogContext, false);
+            },
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context, 'deleted');
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Report deleted'),
-                    backgroundColor: Colors.orange),
-              );
+              print('Delete confirmed');
+              Navigator.pop(dialogContext, true);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
@@ -96,6 +98,48 @@ class _AdminReportsDetailScreenState
         ],
       ),
     );
+
+    print('Confirm result: $confirm');
+
+    if (confirm == true) {
+      setState(() {
+        _isDeleting = true;
+      });
+
+      print('Starting delete operation...');
+
+      try {
+        final reportId = widget.report.id.toString();
+        print('Report ID: $reportId');
+
+        await ref.read(deleteReportProvider(reportId).future);
+
+        print('Delete API call completed');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Report deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Navigator.pop(context, 'deleted');
+        }
+      } catch (e) {
+        print('Delete error: $e');
+        setState(() {
+          _isDeleting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Failed to delete: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -105,27 +149,25 @@ class _AdminReportsDetailScreenState
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF9F2),
-      appBar: const CustomAppBar(title: 'Reports'),
-      body: SafeArea(
-        child: _isUpdating
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(report),
-                    const SizedBox(height: 24),
-                    _buildFeedbackCard(report),
-                    const SizedBox(height: 24),
-                    _buildModerationNotesCard(),
-                    const SizedBox(height: 24),
-                    _buildActionButtons(isPending, report.status),
-                    const SizedBox(height: 16),
-                  ],
-                ),
+      appBar: const CustomAppBar(title: 'Reports', back: true),
+      body: (_isUpdating || _isDeleting)
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(report),
+                  const SizedBox(height: 24),
+                  _buildFeedbackCard(report),
+                  const SizedBox(height: 24),
+                  _buildModerationNotesCard(),
+                  const SizedBox(height: 24),
+                  _buildActionButtons(isPending, report.status),
+                  const SizedBox(height: 16),
+                ],
               ),
-      ),
+            ),
     );
   }
 
@@ -458,7 +500,7 @@ class _AdminReportsDetailScreenState
                       color: Color(0xFFBA1A1A), size: 18),
                   SizedBox(width: 8),
                   Text(
-                    'Delete Feedback',
+                    'Delete Report',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         color: Color(0xFFBA1A1A),
