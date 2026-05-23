@@ -9,4 +9,8 @@ export const pool = new pg.Pool({
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT),
   password: String(process.env.DB_PASSWORD || "654123"),
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> main

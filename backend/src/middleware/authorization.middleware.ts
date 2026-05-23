@@ -1,5 +1,9 @@
 import { type NextFunction, type Request, type Response } from "express";
+<<<<<<< HEAD
 import { type AuthTokenPayload, type UserRole } from "../types/auth.js";
+=======
+import { type UserRole } from "../types/auth.js";
+>>>>>>> main
 
 const respondForbidden = (res: Response, message: string) => {
   return res.status(403).json({ message });
@@ -108,4 +112,8 @@ export const requireOwnerOrRoles = (
       "You do not have permission to perform this action",
     );
   };
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> main

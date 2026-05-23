@@ -10,7 +10,11 @@ const router = Router();
 router.post("/user", registerUser);
 router.post("/login", logInUser);
 router.post("/refresh", refreshToken);
+<<<<<<< HEAD
 router.post("/register", registerUser);
+=======
+
+>>>>>>> main
 // Protected routes (auth required)
 router.get("/me", authenticateToken, getCurrentUser);
 router.get("/user/:id", authenticateToken, requireOwnerOrRoles((req) => req.params.id, "admin"), getUserById);

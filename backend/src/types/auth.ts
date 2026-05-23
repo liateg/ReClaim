@@ -5,4 +5,8 @@ export interface AuthTokenPayload {
   full_name: string;
   email: string;
   role: UserRole;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main
