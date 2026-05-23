@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import '../../../Riverpod/report_provider.dart';
-import '../../../data/model/report_model.dart';
+import '../../../data/models/report_model.dart';
 
 class AdminReportsAllScreen extends ConsumerStatefulWidget {
   const AdminReportsAllScreen({super.key});
@@ -47,10 +47,10 @@ class _AdminReportsAllScreenState extends ConsumerState<AdminReportsAllScreen> {
     if (q.isNotEmpty) {
       items = items
           .where((e) =>
-              e.id.toLowerCase().contains(q) ||
+              e.id.toString().contains(q) ||
               e.reason.displayName.toLowerCase().contains(q) ||
               (e.description?.toLowerCase().contains(q) ?? false) ||
-              e.reporterId.toLowerCase().contains(q))
+              e.reporterId.toString().contains(q))
           .toList();
     }
 
@@ -374,7 +374,8 @@ class _ReportCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown date';
     return '${date.day}/${date.month}/${date.year}';
   }
 }

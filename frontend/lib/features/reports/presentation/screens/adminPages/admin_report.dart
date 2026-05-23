@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import '../../../Riverpod/report_provider.dart';
-import '../../../data/model/report_model.dart';
+import '../../../data/models/report_model.dart';
 
 class AdminReportsScreen extends ConsumerWidget {
   const AdminReportsScreen({super.key});
@@ -36,12 +36,17 @@ class AdminReportsScreen extends ConsumerWidget {
             ),
           ),
           data: (reports) {
-            final pendingCount =
-                reports.where((r) => r.status == ReportStatus.pending).length;
-            final reviewedCount = reports
-                .where((r) => r.status == ReportStatus.under_review)
+            // ✅ Fixed: Add null check for reports
+            final safeReports = reports ?? [];
+
+            final pendingCount = safeReports
+                .where((r) => r != null && r.status == ReportStatus.pending)
                 .length;
-            final totalCount = reports.length;
+            final reviewedCount = safeReports
+                .where(
+                    (r) => r != null && r.status == ReportStatus.under_review)
+                .length;
+            final totalCount = safeReports.length;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.only(
@@ -124,11 +129,11 @@ class AdminReportsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Recent reports list (first 2)
-                  ...reports.take(2).map((r) => Padding(
+                  // ✅ Fixed: Cast to Report and handle null
+                  ...safeReports.take(2).map((r) => Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: _FeedbackCard(
-                          report: r,
+                          report: r as Report,
                           onTap: () =>
                               context.push('/admin/reports/${r.id}', extra: r),
                         ),
@@ -143,7 +148,7 @@ class AdminReportsScreen extends ConsumerWidget {
   }
 }
 
-// Helper widgets (same as before but using Report model)
+// Helper widgets
 class _TotalReportsCard extends StatelessWidget {
   final String value;
   const _TotalReportsCard({required this.value});
@@ -191,14 +196,15 @@ class _StatCard extends StatelessWidget {
   final String label, value, subtitle;
   final Color subtitleColor, iconBgColor, iconColor;
   final IconData icon;
-  const _StatCard(
-      {required this.label,
-      required this.value,
-      required this.subtitle,
-      required this.subtitleColor,
-      required this.iconBgColor,
-      required this.icon,
-      required this.iconColor});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.subtitle,
+    required this.subtitleColor,
+    required this.iconBgColor,
+    required this.icon,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +252,11 @@ class _FeedbackCard extends StatelessWidget {
   final VoidCallback onTap;
   const _FeedbackCard({required this.report, required this.onTap});
 
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown date';
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPending = report.status == ReportStatus.pending;
@@ -270,7 +281,7 @@ class _FeedbackCard extends StatelessWidget {
                       size: 16, color: Color(0xFF404943)),
                 ),
                 const SizedBox(width: 8),
-                Text(report.reporterId,
+                Text('Reporter #${report.reporterId}',
                     style: GoogleFonts.inter(
                         color: const Color(0xFF1D1C18), fontSize: 14)),
                 const SizedBox(width: 8),
@@ -291,7 +302,7 @@ class _FeedbackCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (report.description != null)
+            if (report.description != null && report.description!.isNotEmpty)
               Text(report.description!,
                   style: GoogleFonts.manrope(fontSize: 15)),
             const SizedBox(height: 16),
@@ -308,6 +319,4 @@ class _FeedbackCard extends StatelessWidget {
       ),
     );
   }
-
-  String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
 }

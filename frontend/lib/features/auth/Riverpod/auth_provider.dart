@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/session/services/auth_service.dart';
 import '../../../core/session/app_session.dart';
-<<<<<<< HEAD
 import '../../profile/data/profile_service.dart';
-=======
->>>>>>> main
 
 final authServiceProvider = Provider((ref) => AuthService());
 
@@ -29,14 +26,11 @@ final loginProvider =
   );
 
   await AppSession.saveToken(response['accessToken']);
-<<<<<<< HEAD
   // Seed profile cache with user data
   try {
     await ProfileService().setProfile(
         response['user']['email'], Map<String, dynamic>.from(response['user']));
   } catch (_) {}
-=======
->>>>>>> main
   ref.invalidate(authProvider);
   ref.invalidate(isAdminProvider);
   ref.invalidate(currentUserRoleProvider);
@@ -62,13 +56,10 @@ final registerProvider =
   );
 
   await AppSession.saveToken(response['accessToken']);
-<<<<<<< HEAD
   try {
     await ProfileService().setProfile(
         response['user']['email'], Map<String, dynamic>.from(response['user']));
   } catch (_) {}
-=======
->>>>>>> main
   ref.invalidate(authProvider);
 });
 
@@ -76,26 +67,20 @@ final logoutProvider = FutureProvider<void>((ref) async {
   print('Logging out...');
   final service = ref.read(authServiceProvider);
 
-<<<<<<< HEAD
   // capture current email to invalidate profile cache after sign out
   final currentEmail = AppSession.email;
 
-=======
->>>>>>> main
   // Call backend logout
   await service.logout();
 
   // Clear local session
   await AppSession.signOut();
 
-<<<<<<< HEAD
   // Invalidate cached profile for the signed-out user
   try {
     await ProfileService().invalidateProfile(email: currentEmail);
   } catch (_) {}
 
-=======
->>>>>>> main
   // Invalidate all auth providers
   ref.invalidate(authProvider);
   ref.invalidate(isAdminProvider);

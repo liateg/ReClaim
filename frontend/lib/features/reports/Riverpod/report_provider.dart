@@ -1,6 +1,6 @@
 // lib/features/reports/riverpod/report_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../reports/data/model/report_model.dart';
+import '../../reports/data/models/report_model.dart';
 import '../../reports/data/services/report_service.dart';
 
 final reportServiceProvider = Provider((ref) => ReportService());

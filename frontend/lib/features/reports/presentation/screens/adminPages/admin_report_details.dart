@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import '../../../../reports/Riverpod/report_provider.dart';
-import '../../../data/model/report_model.dart';
+import '../../../data/models/report_model.dart';
 
 class AdminReportsDetailScreen extends ConsumerStatefulWidget {
   final Report report;
@@ -474,7 +474,8 @@ class _AdminReportsDetailScreenState
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown date';
     return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

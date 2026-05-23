@@ -69,8 +69,4 @@ export const authenticateToken = (
     console.error("Error authenticating token:", error);
     return res.status(401).json({ message: "Invalid access token" });
   }
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> main

@@ -422,3 +422,92 @@ Auth required.
 - Send `Authorization: Bearer <accessToken>` for protected endpoints.
 - Use `credentials: 'include'` or equivalent when calling refresh.
 - For item detail screens, do not expect `verificationAnswer` unless the caller is an admin.
+
+## Reports
+
+Base path: `/reports`
+
+### List Reports
+
+`GET /reports`
+
+Auth required.
+
+- Admins: receive all reports.
+- Non-admins: receive only reports created by the authenticated user (reporter).
+
+Response `200`:
+
+```json
+{ "reports": [ { "id": 1, "reporterId": 2, "itemId": 3, "claimId": null, "reason": "duplicate", "description": "...", "status": "pending", "adminNote": null, "createdAt": "...", "updatedAt": "..." } ] }
+```
+
+Notes:
+
+- Because the list response is role-dependent (admin vs reporter), clients should namespace cached `reports:list` entries by user (for example `reports:list:{email}`) or include the authenticated role in the cache key to avoid leaking other users' reports.
+
+### Create Report
+
+`POST /reports`
+
+Auth required.
+
+Request body (one of `itemId` or `claimId` must be provided):
+
+```json
+{
+  "itemId": 3,
+  "claimId": null,
+  "reason": "safety",
+  "description": "Found on building A stairwell"
+}
+```
+
+Response `201`:
+
+```json
+{
+  "message": "Report created successfully",
+  "report": { "id": 10, "reporterId": 2, "itemId": 3, "claimId": null, "reason": "safety", "description": "...", "status": "pending", "adminNote": null, "createdAt": "..." }
+}
+```
+
+### Get Report
+
+`GET /reports/:id`
+
+Auth required. Owners (reporter) and admins can read the report.
+
+Response `200`:
+
+```json
+{ "report": { ... } }
+```
+
+### Update Report
+
+`PUT /reports/:id`
+
+Auth required.
+
+- Owners (reporter) can update `reason` and `description`.
+- Admins can update `status` and `adminNote`.
+
+Response `200`:
+
+```json
+{ "message": "Report updated successfully", "report": { ... } }
+```
+
+### Delete Report
+
+`DELETE /reports/:id`
+
+Auth required. Owners or admins can delete.
+
+Response `200`:
+
+```json
+{ "message": "Report deleted successfully" }
+```
+

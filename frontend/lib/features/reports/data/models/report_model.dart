@@ -68,16 +68,16 @@ enum ReportStatus {
 }
 
 class Report {
-  final String id;
-  final String reporterId;
-  final String? itemId;
-  final String? claimId;
+  final int id;
+  final int reporterId;
+  final int? itemId;
+  final int? claimId;
   final ReportReason reason;
   final String? description;
   final ReportStatus status;
   final String? adminNote;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Report({
     required this.id,
@@ -88,63 +88,58 @@ class Report {
     this.description,
     required this.status,
     this.adminNote,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory Report.fromJson(Map<String, dynamic> json) {
+    DateTime? parse(String? s) {
+      if (s == null) return null;
+      try {
+        return DateTime.parse(s);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    int parseInt(dynamic v) {
+      if (v == null) throw FormatException('Missing integer value');
+      if (v is int) return v;
+      final s = v.toString();
+      return int.parse(s);
+    }
+
+    final idVal = json['id'] ?? json['Id'];
+    final reporterVal = json['reporterId'] ?? json['reporter_id'];
+    final itemVal = json['itemId'] ?? json['item_id'];
+    final claimVal = json['claimId'] ?? json['claim_id'];
+    final createdVal = json['createdAt'] ?? json['created_at'];
+    final updatedVal = json['updatedAt'] ?? json['updated_at'];
+
     return Report(
-      id: json['id'].toString(),
-      reporterId: json['reporter_id'].toString(),
-      itemId: json['item_id']?.toString(),
-      claimId: json['claim_id']?.toString(),
-      reason: ReportReason.fromString(json['reason']),
-      description: json['description'],
-      status: ReportStatus.fromString(json['status']),
-      adminNote: json['admin_note'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      id: parseInt(idVal),
+      reporterId: parseInt(reporterVal),
+      itemId: itemVal == null ? null : parseInt(itemVal),
+      claimId: claimVal == null ? null : parseInt(claimVal),
+      reason: (json['reason'] ?? ''),
+      description: (json['description'] ?? null) as String?,
+      status: (json['status'] ?? ''),
+      adminNote: (json['adminNote'] ?? json['admin_note']) as String?,
+      createdAt: parse(createdVal?.toString()),
+      updatedAt: parse(updatedVal?.toString()),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'reporter_id': reporterId,
-      'item_id': itemId,
-      'claim_id': claimId,
-      'reason': reason.name,
-      'description': description,
-      'status': status.name,
-      'admin_note': adminNote,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
-
-  Report copyWith({
-    String? id,
-    String? reporterId,
-    String? itemId,
-    String? claimId,
-    ReportReason? reason,
-    String? description,
-    ReportStatus? status,
-    String? adminNote,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return Report(
-      id: id ?? this.id,
-      reporterId: reporterId ?? this.reporterId,
-      itemId: itemId ?? this.itemId,
-      claimId: claimId ?? this.claimId,
-      reason: reason ?? this.reason,
-      description: description ?? this.description,
-      status: status ?? this.status,
-      adminNote: adminNote ?? this.adminNote,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'reporter_id': reporterId,
+        'item_id': itemId,
+        'claim_id': claimId,
+        'reason': reason,
+        'description': description,
+        'status': status,
+        'admin_note': adminNote,
+        'created_at': createdAt?.toIso8601String(),
+        'updated_at': updatedAt?.toIso8601String(),
+      };
 }
