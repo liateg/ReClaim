@@ -145,7 +145,7 @@ class ClaimDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: AppTheme.feedbackCardBackground,
+                      color: const Color(0xFFE6E2DB),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -202,26 +202,26 @@ class ClaimDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.go('/claims/$claimId/item/item-123');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        "[DEV] View Matching Item",
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: ElevatedButton(
+                  //     onPressed: () {
+                  //       context.go('/claims/$claimId/item/item-123');
+                  //     },
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: Colors.orange,
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //       padding: const EdgeInsets.symmetric(vertical: 12),
+                  //     ),
+                  //     child: const Text(
+                  //       "[DEV] View Matching Item",
+                  //       style: TextStyle(color: Colors.white, fontSize: 12),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 20),
                 ],
               ),
             ),

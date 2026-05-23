@@ -46,3 +46,10 @@ final updateReportStatusProvider =
   ref.invalidate(allReportsProvider);
   ref.invalidate(reportDetailProvider(data['id']));
 });
+final deleteReportProvider =
+    FutureProvider.family<void, String>((ref, id) async {
+  final service = ref.read(reportServiceProvider);
+  await service.deleteReport(id);
+  ref.invalidate(myReportsProvider);
+  ref.invalidate(allReportsProvider);
+});

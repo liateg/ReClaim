@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/report_model.dart';
 import '../../Riverpod/report_provider.dart';
+import '../../../../shared/widgets/appbar.dart';
 import 'feedback_submitted_success.dart';
 
 class SubmitFeedbackScreen extends ConsumerStatefulWidget {
@@ -207,10 +208,10 @@ class _SubmitFeedbackScreenState extends ConsumerState<SubmitFeedbackScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
+      appBar: const CustomAppBar(title: 'Submit Report', back: true),
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
