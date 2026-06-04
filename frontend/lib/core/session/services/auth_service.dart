@@ -15,17 +15,25 @@ class AuthService {
     _dio.options.baseUrl = baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.validateStatus = (status) {
+      return status != null && status >= 200 && status < 300;
+    };
   }
 
   static String messageFromDio(DioException e, String fallback) {
-    final data = e.response?.data;
-    if (data is Map && data['message'] != null) {
-      return data['message'].toString();
-    }
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout) {
-      return 'Cannot reach server at $baseUrl. Is the backend running?';
-    }
+    try {
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        return data['message'].toString();
+      }
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        return 'Cannot reach server at $baseUrl. Is the backend running?';
+      }
+      if (e.response?.statusCode != null) {
+        return '$fallback (${e.response!.statusCode})';
+      }
+    } catch (_) {}
     return fallback;
   }
 
@@ -37,15 +45,9 @@ class AuthService {
       });
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
-      throw Exception(messageFromDio(e, 'Login failed'));
+      final errorMsg = messageFromDio(e, 'Login failed');
+      throw Exception(errorMsg);
     } catch (e) {
-      print('Login error in service: $e');
-      if (e is DioException) {
-        // ✅ Extract actual error message from backend
-        final errorMsg = e.response?.data['message'] ?? 'Login failed';
-        print('Backend error message: $errorMsg');
-        throw Exception(errorMsg);
-      }
       throw Exception('Login failed. Please check your connection.');
     }
   }
@@ -71,10 +73,7 @@ class AuthService {
 
       return responseData;
     } catch (e) {
-      print('Register error: $e');
       if (e is DioException) {
-        print('Dio error response: ${e.response?.data}');
-        print('Dio error status: ${e.response?.statusCode}');
         final errorMsg = e.response?.data['message'] ?? 'Registration failed';
         throw Exception(errorMsg);
       }
@@ -92,7 +91,6 @@ class AuthService {
         );
       }
     } catch (_) {
-      // Still clear local session if backend logout fails.
     } finally {
       await _storage.delete(key: 'token');
       await AppSession.clearToken();

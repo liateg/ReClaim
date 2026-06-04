@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/session/services/auth_service.dart';
+import '../../../../core/session/app_session.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../utils/theme/app_theme.dart';
@@ -21,6 +23,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   String? _generalError;
+  bool _isLoading = false;
 
   Future<void> _handleLogin() async {
     setState(() {
@@ -49,31 +52,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      await ref.read(loginProvider({
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      }).future);
+      // Call service directly instead of through provider
+      final service = ref.read(authServiceProvider);
 
-      final isLoggedIn = await ref.read(authProvider.future);
+      final response = await service.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+      final user = Map<String, dynamic>.from(response['user'] as Map);
+      await AppSession.signIn(
+        role: user['role'] == 'admin' ? AppUserRole.admin : AppUserRole.user,
+        email: user['email']?.toString() ?? '',
+        displayName: user['full_name']?.toString() ?? '',
+        userId: int.tryParse(user['id']?.toString() ?? ''),
+      );
 
-      if (isLoggedIn) {
+      final accessToken = response['accessToken'] ?? response['token'];
+      if (accessToken != null) {
+        await AppSession.saveToken(accessToken.toString());
+      }
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Welcome back!'),
             backgroundColor: Colors.green,
           ),
         );
+        // Invalidate auth state
+        ref.invalidate(authProvider);
+        ref.invalidate(isAdminProvider);
+        ref.invalidate(currentUserRoleProvider);
+        ref.invalidate(userNameProvider);
+        ref.invalidate(userEmailProvider);
+
         context.go(RoutePaths.home);
-      } else {
-        setState(() {
-          _generalError = 'Login failed. Please try again.';
-        });
       }
     } catch (e) {
-      setState(() {
-        _generalError = e.toString().replaceFirst('Exception: ', '');
-      });
+      if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
+        setState(() {
+          _isLoading = false;
+          _generalError = errorMsg;
+        });
+      } else {}
     }
   }
 
@@ -91,7 +118,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
@@ -166,13 +192,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 errorText: _passwordError,
               ),
               const SizedBox(height: 24),
-              authState.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : CustomButton(
-                      text: 'Sign In',
-                      onPressed: _handleLogin,
-                      isLoading: false,
-                    ),
+              CustomButton(
+                text: 'Sign In',
+                onPressed: _isLoading ? null : _handleLogin,
+                isLoading: _isLoading,
+              ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

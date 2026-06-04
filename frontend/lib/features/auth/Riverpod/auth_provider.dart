@@ -35,9 +35,13 @@ final loginProvider =
     FutureProvider.family<void, Map<String, String>>((ref, data) async {
   final service = ref.read(authServiceProvider);
 
-  final response = await service.login(data['email']!, data['password']!);
-  await persistAuthSession(response);
-  invalidateAuthState(ref);
+  try {
+    final response = await service.login(data['email']!, data['password']!);
+    await persistAuthSession(response);
+    invalidateAuthState(ref);
+  } catch (e) {
+    rethrow; // Make sure error propagates
+  }
 });
 
 final registerProvider = FutureProvider.autoDispose
@@ -69,7 +73,6 @@ final logoutProvider = FutureProvider.autoDispose<void>((ref) async {
     ref.invalidate(userNameProvider);
     ref.invalidate(userEmailProvider);
   }
-
 });
 
 final isAdminProvider = Provider<bool>((ref) => AppSession.isAdmin);
