@@ -8,7 +8,7 @@ class ReportService {
   final Dio _dio = Dio();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final SqliteCache _cache = SqliteCache();
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'http://localhost:3000';
 
   ReportService() {
     _dio.options.baseUrl = baseUrl;
