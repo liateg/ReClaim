@@ -1,19 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:frontend/features/claims/Riverpod/claims_provider.dart';
 
-class ItemCard extends StatelessWidget {
+class ItemCard extends ConsumerWidget {
   final Map<String, dynamic> item;
   final bool isAdmin;
 
   const ItemCard({super.key, required this.item, this.isAdmin = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final imageUrl = (item['image_url'] as String?)?.trim() ?? '';
     final title = (item['title'] as String?) ?? 'Untitled item';
     final location = (item['location'] as String?) ?? 'Unknown location';
     final status = (item['status'] as String?) ?? 'available';
     final itemId = item['id'];
+
+    final claimsAsync = ref.watch(claimsListProvider);
+    final hasClaimed = claimsAsync.maybeWhen(
+      data: (claims) => claims.any((c) {
+        final itemIdVal = c['itemId'] ?? c['item_id'];
+        return itemIdVal?.toString() == itemId?.toString() &&
+            ['pending', 'approved'].contains((c['status']?.toString() ?? '').toLowerCase());
+      }),
+      orElse: () => false,
+    );
+    final isAvailable = status == 'available';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -71,8 +84,18 @@ class ItemCard extends StatelessWidget {
                       backgroundColor: const Color(0xFF1B5E3E),
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: itemId == null ? null : () => context.push('/items/$itemId'), // Lia's path parameter
-                    child: Text(isAdmin ? "Manage Item" : "Claim Item"),
+                    onPressed: (itemId == null || (!isAdmin && (!isAvailable || hasClaimed)))
+                        ? null
+                        : () => context.push('/items/$itemId'), // Lia's path parameter
+                    child: Text(
+                      isAdmin
+                          ? "Manage Item"
+                          : !isAvailable
+                              ? status.toUpperCase()
+                              : hasClaimed
+                                  ? "CLAIMED"
+                                  : "Claim Item",
+                    ),
                   ),
                 ),
               ],

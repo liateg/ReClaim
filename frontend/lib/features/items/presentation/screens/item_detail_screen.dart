@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/Riverpod/items_provider.dart';
-import '../widgets/claim_submission_content.dart';
+import 'package:frontend/features/claims/Riverpod/claims_provider.dart';
+
 
 Widget _itemDetailImage(String? imageUrl) {
   final url = imageUrl?.trim() ?? '';
@@ -37,6 +38,7 @@ class ClaimDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemAsync = ref.watch(itemByIdProvider(claimId));
+    final claimsAsync = ref.watch(claimsListProvider);
 
     return itemAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -56,6 +58,19 @@ class ClaimDetailScreen extends ConsumerWidget {
         if (item == null) {
           return const Center(child: Text('Item not found'));
         }
+
+        final itemId = item['id']?.toString() ?? '';
+        final status = (item['status'] as String?) ?? 'available';
+        final isAvailable = status == 'available';
+
+        final hasClaimed = claimsAsync.maybeWhen(
+          data: (claims) => claims.any((c) {
+            final itemIdVal = c['itemId'] ?? c['item_id'];
+            return itemIdVal?.toString() == itemId &&
+                ['pending', 'approved'].contains((c['status']?.toString() ?? '').toLowerCase());
+          }),
+          orElse: () => false,
+        );
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -86,14 +101,22 @@ class ClaimDetailScreen extends ConsumerWidget {
                     backgroundColor: const Color(0xFF1B5E3E),
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () async {
-                    await showModalBottomSheet<bool>(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) => ClaimSubmissionContent(item: item),
-                    );
-                  },
-                  child: const Text("Claim This Item"),
+                  onPressed: (!isAvailable || hasClaimed)
+                      ? null
+                      : () async {
+                          await showModalBottomSheet<bool>(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (context) => ClaimSubmissionContent(item: item),
+                          );
+                        },
+                  child: Text(
+                    !isAvailable
+                        ? status.toUpperCase()
+                        : hasClaimed
+                            ? "CLAIMED"
+                            : "Claim This Item",
+                  ),
                 ),
               ),
             ],

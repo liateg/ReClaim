@@ -464,6 +464,7 @@ class ItemsService {
         options: Options(headers: await _authHeaders()),
       );
       await invalidateItemCache(id: itemId);
+      await invalidateClaimsCache();
       return true;
     } on DioException catch (e) {
       _throwFromDio(e, 'Failed to submit claim.');
@@ -482,6 +483,17 @@ class ItemsService {
       // Cache is best-effort. Do not let cache failures bubble to UI.
       // ignore: avoid_print
       print('Warning: failed to invalidate item cache: $e');
+    }
+  }
+
+  /// Invalidate claims cache when claims are modified.
+  Future<void> invalidateClaimsCache() async {
+    try {
+      await _cache.delete('claims:list');
+    } catch (e) {
+      // Cache is best-effort. Do not let cache failures bubble to UI.
+      // ignore: avoid_print
+      print('Warning: failed to invalidate claims cache: $e');
     }
   }
 }

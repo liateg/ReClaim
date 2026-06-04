@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/Riverpod/items_provider.dart';
+import 'package:frontend/features/claims/Riverpod/claims_provider.dart';
 
 class ClaimSubmissionContent extends ConsumerStatefulWidget {
   final Map<String, dynamic> item;
@@ -40,6 +41,7 @@ class _ClaimSubmissionContentState
       if (!mounted) return;
 
       invalidateItemsState(ref, itemId: id);
+      ref.invalidate(claimsListProvider);
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Claim submitted successfully.')),

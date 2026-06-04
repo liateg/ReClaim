@@ -1,5 +1,49 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
+
+Widget _buildCardImage(String? imageUrl) {
+  if (imageUrl == null || imageUrl.isEmpty) {
+    return Container(
+      color: AppTheme.grayBorder.withValues(alpha: 0.45),
+      child: const Icon(
+        Icons.image_outlined,
+        size: 44,
+        color: AppTheme.grayText,
+      ),
+    );
+  }
+
+  // Check if it's a network image
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: AppTheme.grayBorder.withValues(alpha: 0.45),
+        child: const Icon(
+          Icons.broken_image,
+          size: 44,
+          color: AppTheme.grayText,
+        ),
+      ),
+    );
+  }
+
+  // Otherwise treat as local file
+  return Image.file(
+    File(imageUrl),
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => Container(
+      color: AppTheme.grayBorder.withValues(alpha: 0.45),
+      child: const Icon(
+        Icons.broken_image,
+        size: 44,
+        color: AppTheme.grayText,
+      ),
+    ),
+  );
+}
 
 class ClaimCard extends StatelessWidget {
   final Map<String, dynamic> claim;
@@ -71,16 +115,7 @@ class ClaimCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 child: AspectRatio(
                   aspectRatio: 16 / 10,
-                  child: imageUrl == null || imageUrl.isEmpty
-                      ? Container(
-                          color: AppTheme.grayBorder.withValues(alpha: 0.45),
-                          child: const Icon(
-                            Icons.image_outlined,
-                            size: 44,
-                            color: AppTheme.grayText,
-                          ),
-                        )
-                      : Image.network(imageUrl, fit: BoxFit.cover),
+                  child: _buildCardImage(imageUrl),
                 ),
               ),
               const SizedBox(height: 12),

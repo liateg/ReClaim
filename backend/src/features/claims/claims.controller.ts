@@ -14,14 +14,19 @@ const allowedStatuses = new Set([
 ]);
 
 const claimSelect = `
-  id,
-  item_id AS "itemId",
-  claimant_id AS "claimantId",
-  answer_attempt AS "answerAttempt",
-  status,
-  review_note AS "reviewNote",
-  created_at AS "createdAt",
-  updated_at AS "updatedAt"
+  c.id,
+  c.item_id AS "itemId",
+  c.claimant_id AS "claimantId",
+  c.answer_attempt AS "answerAttempt",
+  c.status,
+  c.review_note AS "reviewNote",
+  c.created_at AS "createdAt",
+  c.updated_at AS "updatedAt",
+  i.title,
+  i.description,
+  i.image_url AS "imageUrl",
+  i.location,
+  i.category_id AS "categoryId"
 `;
 
 const toClaimResponse = (claim: Record<string, unknown>) => ({
@@ -33,6 +38,11 @@ const toClaimResponse = (claim: Record<string, unknown>) => ({
   reviewNote: claim.reviewNote,
   createdAt: claim.createdAt,
   updatedAt: claim.updatedAt,
+  title: claim.title,
+  description: claim.description,
+  imageUrl: claim.imageUrl,
+  location: claim.location,
+  categoryId: claim.categoryId,
 });
 
 const getAuth = (req: Request) => (req as AuthedRequest).auth;
@@ -102,11 +112,18 @@ export const createClaim = async (req: Request, res: Response) => {
         .json({ message: "New claims must start as pending" });
     }
 
-    const createdClaim = await pool.query(
+    const insertResult = await pool.query(
       `INSERT INTO claims (item_id, claimant_id, answer_attempt, status, review_note)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING ${claimSelect}`,
+       RETURNING id`,
       [itemId, auth.id, answerAttempt, status, null],
+    );
+
+    const createdClaim = await pool.query(
+      `SELECT ${claimSelect} FROM claims c
+       JOIN items i ON c.item_id = i.id
+       WHERE c.id = $1`,
+      [insertResult.rows[0].id],
     );
 
     return res.status(201).json({
@@ -132,9 +149,12 @@ export const getClaims = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    const whereClause = auth.role === "admin" ? "" : "WHERE claimant_id = $1";
+    const whereClause = auth.role === "admin" ? "" : "WHERE c.claimant_id = $1";
     const result = await pool.query(
-      `SELECT ${claimSelect} FROM claims ${whereClause} ORDER BY id DESC`,
+      `SELECT ${claimSelect} FROM claims c
+       JOIN items i ON c.item_id = i.id
+       ${whereClause}
+       ORDER BY c.id DESC`,
       auth.role === "admin" ? [] : [auth.id],
     );
 
@@ -157,7 +177,9 @@ export const getClaimById = async (req: Request, res: Response) => {
     }
 
     const result = await pool.query(
-      `SELECT ${claimSelect} FROM claims WHERE id = $1`,
+      `SELECT ${claimSelect} FROM claims c
+       JOIN items i ON c.item_id = i.id
+       WHERE c.id = $1`,
       [id],
     );
 
@@ -263,17 +285,24 @@ export const updateClaim = async (req: Request, res: Response) => {
 
     values.push(Number(id));
 
-    const result = await pool.query(
+    const updateResult = await pool.query(
       `UPDATE claims
        SET ${updateFragments.join(", ")}
        WHERE id = $${values.length}
-       RETURNING ${claimSelect}`,
+       RETURNING id`,
       values,
     );
 
-    if (result.rows.length === 0) {
+    if (updateResult.rows.length === 0) {
       return res.status(404).json({ message: "Claim not found" });
     }
+
+    const result = await pool.query(
+      `SELECT ${claimSelect} FROM claims c
+       JOIN items i ON c.item_id = i.id
+       WHERE c.id = $1`,
+      [updateResult.rows[0].id],
+    );
 
     return res.status(200).json({
       message: "Claim updated successfully",
@@ -334,13 +363,20 @@ export const approveClaim = async (req: Request, res: Response) => {
         ? "Verification answer matched."
         : "Verification answer did not match.");
 
-    const result = await pool.query(
+    const updateResult = await pool.query(
       `UPDATE claims
        SET status = $1,
            review_note = $2
        WHERE id = $3
-       RETURNING ${claimSelect}`,
+       RETURNING id`,
       [finalStatus, finalReviewNote, Number(id)],
+    );
+
+    const result = await pool.query(
+      `SELECT ${claimSelect} FROM claims c
+       JOIN items i ON c.item_id = i.id
+       WHERE c.id = $1`,
+      [updateResult.rows[0].id],
     );
 
     return res.status(200).json({
