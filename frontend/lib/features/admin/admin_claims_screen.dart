@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../claims/data/mock/mock_claims.dart';
-import '../claims/data/model/claim_model.dart';
-import '../claims/enum/claim_status.dart';
-import '../claims/presentation/widgets/admin.claim_card.dart';
 import '../../shared/widgets/appbar.dart';
 import '../../utils/theme/app_theme.dart';
+import '../claims/presentation/widgets/admin.claim_card.dart';
+import 'data/admin_claims_repository.dart';
 
 class AdminClaimsScreen extends StatefulWidget {
   const AdminClaimsScreen({super.key});
@@ -20,8 +18,16 @@ class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
   static const Color _green = Color(0xFF003925);
   static const Color _muted = Color(0xFF404943);
 
+  final AdminClaimsRepository _repository = AdminClaimsRepository();
   final TextEditingController _search = TextEditingController();
   bool _pendingOnly = false;
+  late Future<List<AdminClaimRecord>> _recordsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _recordsFuture = _repository.getClaims();
+  }
 
   @override
   void dispose() {
@@ -29,14 +35,24 @@ class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
     super.dispose();
   }
 
-  List<Claim> get _filtered {
+  Future<void> _reload() async {
+    setState(() {
+      _recordsFuture = _repository.getClaims(forceRefresh: true);
+    });
+    await _recordsFuture;
+  }
+
+  List<AdminClaimRecord> _filtered(List<AdminClaimRecord> records) {
     final q = _search.text.trim().toLowerCase();
-    return mockClaims.where((c) {
-      if (_pendingOnly && c.status != ClaimStatus.pending) return false;
+    return records.where((record) {
+      if (_pendingOnly && record.claim.status != 'pending') return false;
       if (q.isEmpty) return true;
-      return c.title.toLowerCase().contains(q) ||
-          c.location.toLowerCase().contains(q) ||
-          c.category.toLowerCase().contains(q);
+
+      final claim = record.toUiClaim();
+      return claim.title.toLowerCase().contains(q) ||
+          claim.location.toLowerCase().contains(q) ||
+          claim.category.toLowerCase().contains(q) ||
+          (record.claimant?.fullName.toLowerCase().contains(q) ?? false);
     }).toList();
   }
 
@@ -46,11 +62,9 @@ class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
     final yesterday = today.subtract(const Duration(days: 1));
     final claimDay = DateTime(date.year, date.month, date.day);
 
-    if (claimDay == today) {
-      return 'TODAY';
-    } else if (claimDay == yesterday) {
-      return 'YESTERDAY';
-    }
+    if (claimDay == today) return 'TODAY';
+    if (claimDay == yesterday) return 'YESTERDAY';
+
     const months = [
       'JAN',
       'FEB',
@@ -70,125 +84,158 @@ class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final list = _filtered;
-
     return Scaffold(
       backgroundColor: _bg,
       appBar: const CustomAppBar(title: 'Claimed Items', back: false),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      body: FutureBuilder<List<AdminClaimRecord>>(
+        future: _recordsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              snapshot.data == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Claimed Inventory',
-                    style: TextStyle(
-                      fontFamily: Theme.of(context).textTheme.titleLarge?.fontFamily,
-                      color: AppTheme.primaryGreen,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Review and manage possession ownership claims submitted by students and staff.',
-                    style: TextStyle(
-                      color: _muted,
-                      fontSize: 14,
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE6E2DB),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: TextField(
-                      controller: _search,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        hintText: 'Search by items',
-                        hintStyle: TextStyle(
-                          color: Color(0x99404943),
-                          fontSize: 15,
-                        ),
-                        prefixIcon: Icon(Icons.search, color: Color(0xFF77756F)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _filterChip(
-                        label: 'ALL',
-                        selected: !_pendingOnly,
-                        onTap: () => setState(() => _pendingOnly = false),
-                      ),
-                      const SizedBox(width: 10),
-                      _filterChip(
-                        label: 'PENDING',
-                        selected: _pendingOnly,
-                        showFilterIcon: true,
-                        onTap: () => setState(() => _pendingOnly = true),
-                      ),
-                    ],
+                  Text('Error: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _reload,
+                    child: const Text('Retry'),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
-            ),
-          ),
-          if (list.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inventory_2_outlined,
-                        size: 56, color: AppTheme.grayText),
-                    const SizedBox(height: 12),
-                    Text(
-                      _pendingOnly
-                          ? 'No pending claims match your filters.'
-                          : 'No claims match your search.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.grayText, fontSize: 15),
-                    ),
-                  ],
+            );
+          }
+
+          final records = snapshot.data ?? const <AdminClaimRecord>[];
+          final list = _filtered(records);
+
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Claimed Inventory',
+                        style: TextStyle(
+                          fontFamily:
+                              Theme.of(context).textTheme.titleLarge?.fontFamily,
+                          color: AppTheme.primaryGreen,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Review and manage possession ownership claims submitted by students and staff.',
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 14,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6E2DB),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: TextField(
+                          controller: _search,
+                          onChanged: (_) => setState(() {}),
+                          decoration: const InputDecoration(
+                            hintText: 'Search by items',
+                            hintStyle: TextStyle(
+                              color: Color(0x99404943),
+                              fontSize: 15,
+                            ),
+                            prefixIcon:
+                                Icon(Icons.search, color: Color(0xFF77756F)),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          _filterChip(
+                            label: 'ALL',
+                            selected: !_pendingOnly,
+                            onTap: () => setState(() => _pendingOnly = false),
+                          ),
+                          const SizedBox(width: 10),
+                          _filterChip(
+                            label: 'PENDING',
+                            selected: _pendingOnly,
+                            showFilterIcon: true,
+                            onTap: () => setState(() => _pendingOnly = true),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-              sliver: SliverList.separated(
-                itemCount: list.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 20),
-                itemBuilder: (context, index) {
-                  final claim = list[index];
-                  return AdminClaimCard(
-                    title: claim.title,
-                    location: claim.location,
-                    imageUrl: claim.imageUrl ?? '',
-                    date: _formatDate(claim.date),
-                    onPressed: () => context.go('/admin/claims/${claim.id}'),
-                  );
-                },
-              ),
-            ),
-        ],
+              if (list.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inventory_2_outlined,
+                            size: 56, color: AppTheme.grayText),
+                        const SizedBox(height: 12),
+                        Text(
+                          _pendingOnly
+                              ? 'No pending claims match your filters.'
+                              : 'No claims match your search.',
+                          textAlign: TextAlign.center,
+                          style:
+                              TextStyle(color: AppTheme.grayText, fontSize: 15),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  sliver: SliverList.separated(
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 20),
+                    itemBuilder: (context, index) {
+                      final record = list[index];
+                      final claim = record.toUiClaim();
+                      return AdminClaimCard(
+                        title: claim.title,
+                        location: claim.location,
+                        imageUrl: claim.imageUrl ?? '',
+                        date: _formatDate(claim.date),
+                        onPressed: () => context.go('/admin/claims/${claim.id}'),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
