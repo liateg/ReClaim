@@ -223,8 +223,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/reports/Riverpod/report_provider.dart';
 import '../../features/reports/data/models/report_model.dart';
-import '../../../../shared/widgets/appbar.dart';
-import '../../../../utils/theme/app_theme.dart';
+import '../../shared/widgets/appbar.dart';
+import '../../utils/theme/app_theme.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
