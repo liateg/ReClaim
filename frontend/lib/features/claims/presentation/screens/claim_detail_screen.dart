@@ -98,7 +98,12 @@ class ClaimDetailScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Text('Failed to load claim: $error'),
               TextButton(
-                onPressed: () => ref.invalidate(claimProvider(claimId)),
+                onPressed: () async {
+                  await ref
+                      .read(claimsServiceProvider)
+                      .invalidateClaimsCache(id: claimId);
+                  ref.invalidate(claimProvider(claimId));
+                },
                 child: const Text('Retry'),
               ),
             ],

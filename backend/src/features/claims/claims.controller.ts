@@ -297,6 +297,13 @@ export const updateClaim = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Claim not found" });
     }
 
+    if (status === "approved") {
+      await pool.query(
+        "UPDATE items SET status = 'claimed' WHERE id = (SELECT item_id FROM claims WHERE id = $1)",
+        [Number(id)],
+      );
+    }
+
     const result = await pool.query(
       `SELECT ${claimSelect} FROM claims c
        JOIN items i ON c.item_id = i.id
@@ -371,6 +378,13 @@ export const approveClaim = async (req: Request, res: Response) => {
        RETURNING id`,
       [finalStatus, finalReviewNote, Number(id)],
     );
+
+    if (finalStatus === "approved") {
+      await pool.query(
+        "UPDATE items SET status = 'claimed' WHERE id = (SELECT item_id FROM claims WHERE id = $1)",
+        [Number(id)],
+      );
+    }
 
     const result = await pool.query(
       `SELECT ${claimSelect} FROM claims c

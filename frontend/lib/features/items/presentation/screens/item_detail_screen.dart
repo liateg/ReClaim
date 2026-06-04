@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/features/claims/Riverpod/claims_provider.dart';
+import '../widgets/claim_submission_content.dart';
 
 
 Widget _itemDetailImage(String? imageUrl) {

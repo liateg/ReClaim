@@ -265,14 +265,32 @@ class _AdminClaimDetailScreenState extends State<AdminClaimDetailScreen> {
                   children: [
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Claim confirmed.'),
-                              backgroundColor: Color(0xFF003925),
-                            ),
-                          );
-                          context.pop();
+                        onPressed: () async {
+                          try {
+                            await _repository.updateClaimStatus(
+                              widget.claimId,
+                              'approved',
+                              reviewNote: 'Approved by admin manually.',
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Claim confirmed successfully.'),
+                                  backgroundColor: Color(0xFF003925),
+                                ),
+                              );
+                              context.pop(true);
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error confirming claim: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF003925),
@@ -295,14 +313,32 @@ class _AdminClaimDetailScreenState extends State<AdminClaimDetailScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Claim denied.'),
-                              backgroundColor: Colors.grey.shade800,
-                            ),
-                          );
-                          context.pop();
+                        onPressed: () async {
+                          try {
+                            await _repository.updateClaimStatus(
+                              widget.claimId,
+                              'rejected',
+                              reviewNote: 'Denied by admin manually.',
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Claim denied successfully.'),
+                                  backgroundColor: Colors.grey.shade800,
+                                ),
+                              );
+                              context.pop(true);
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error denying claim: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF003925),

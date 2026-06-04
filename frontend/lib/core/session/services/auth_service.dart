@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/session/app_session.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/core/cache/sqlite_cache.dart';
 
 class AuthService {
   final Dio _dio = Dio();
@@ -43,6 +44,8 @@ class AuthService {
         'email': email.trim(),
         'password': password,
       });
+      // Clear cache on login to avoid any stale data from previous sessions/users
+      await SqliteCache().clear();
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
       final errorMsg = messageFromDio(e, 'Login failed');
@@ -70,6 +73,8 @@ class AuthService {
         await _storage.write(key: 'token', value: token.toString());
         await AppSession.saveToken(token.toString());
       }
+      // Clear cache on registration to avoid any stale data
+      await SqliteCache().clear();
 
       return responseData;
     } catch (e) {
@@ -94,6 +99,8 @@ class AuthService {
     } finally {
       await _storage.delete(key: 'token');
       await AppSession.clearToken();
+      // Clear the cache on logout
+      await SqliteCache().clear();
     }
   }
 

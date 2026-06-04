@@ -11,6 +11,6 @@ final claimsListProvider = FutureProvider<List<dynamic>>((ref) async {
 final claimProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, claimId) async {
     final service = ref.watch(claimsServiceProvider);
-    return service.getClaimById(claimId);
+    return service.getClaimById(claimId, forceRefresh: true);
   },
 );

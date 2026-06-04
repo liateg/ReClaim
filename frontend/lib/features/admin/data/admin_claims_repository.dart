@@ -203,6 +203,28 @@ class AdminClaimsRepository {
       updatedAt: claim.updatedAt?.toIso8601String(),
     );
   }
+
+  Future<bool> updateClaimStatus(String id, String status, {String? reviewNote}) async {
+    final token = await AuthService().getToken();
+    try {
+      await _dio.put(
+        '/claims/$id',
+        data: {
+          'status': status,
+          if (reviewNote != null) 'reviewNote': reviewNote,
+        },
+        options: Options(
+          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        ),
+      );
+      // Invalidate both claims and items caches
+      await _claimsService.invalidateClaimsCache(id: id);
+      await _itemsService.invalidateItemCache();
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 ClaimStatus _statusFromApi(String status) {

@@ -37,7 +37,19 @@ class ClaimsScreen extends ConsumerWidget {
         ),
         data: (claims) {
           if (claims.isEmpty) {
-            return const ClaimEmptyScreen();
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(claimsServiceProvider).invalidateClaimsCache();
+                return ref.refresh(claimsListProvider.future);
+              },
+              child: const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: 500,
+                  child: ClaimEmptyScreen(),
+                ),
+              ),
+            );
           }
 
           return Column(
@@ -51,12 +63,18 @@ class ClaimsScreen extends ConsumerWidget {
                 ),
               ),
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: claims.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await ref.read(claimsServiceProvider).invalidateClaimsCache();
+                    return ref.refresh(claimsListProvider.future);
+                  },
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: claims.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
                     final claimData = claims[index];
 
                     // Parse claim data from backend response
@@ -84,9 +102,39 @@ class ClaimsScreen extends ConsumerWidget {
                       claim: claimMap,
                       onWithdraw: () async {
                         if (isPending) {
-                          await showClaimWithdrawDialog(context);
+                          final confirmed = await showClaimWithdrawDialog(context);
+                          if (confirmed == true && context.mounted) {
+                            try {
+                              await ref.read(claimsServiceProvider).withdrawClaim(claimMap['id']!);
+                              ref.invalidate(claimsListProvider);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Claim withdrawn successfully.')),
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+                                );
+                              }
+                            }
+                          }
                         } else {
-                          await showClaimDeleteDialog(context);
+                          final confirmed = await showClaimDeleteDialog(context);
+                          if (confirmed == true && context.mounted) {
+                            try {
+                              await ref.read(claimsServiceProvider).deleteClaim(claimMap['id']!);
+                              ref.invalidate(claimsListProvider);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Claim deleted successfully.')),
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+                                );
+                              }
+                            }
+                          }
                         }
                       },
                       onTap: () => context.go('/claims/${claimMap['id']}'),
@@ -94,8 +142,9 @@ class ClaimsScreen extends ConsumerWidget {
                   },
                 ),
               ),
-            ],
-          );
+            ),
+          ],
+        );
         },
       ),
     );

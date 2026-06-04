@@ -68,4 +68,49 @@ class ClaimsService {
     await _cache.delete('claims:list');
     if (id != null) await _cache.delete('claims:$id');
   }
+
+  Future<bool> withdrawClaim(String id) async {
+    final token = await AuthService().getToken();
+    try {
+      await _dio.put(
+        '/claims/$id',
+        data: {'status': 'withdrawn'},
+        options: Options(
+          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        ),
+      );
+      await invalidateClaimsCache(id: id);
+      return true;
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'Failed to withdraw claim.';
+      throw Exception(message);
+    } catch (e) {
+      throw Exception('Failed to withdraw claim: $e');
+    }
+  }
+
+  Future<bool> deleteClaim(String id) async {
+    final token = await AuthService().getToken();
+    try {
+      await _dio.delete(
+        '/claims/$id',
+        options: Options(
+          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        ),
+      );
+      await invalidateClaimsCache(id: id);
+      return true;
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'Failed to delete claim.';
+      throw Exception(message);
+    } catch (e) {
+      throw Exception('Failed to delete claim: $e');
+    }
+  }
 }

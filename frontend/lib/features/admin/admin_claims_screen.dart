@@ -116,124 +116,133 @@ class _AdminClaimsScreenState extends State<AdminClaimsScreen> {
           final records = snapshot.data ?? const <AdminClaimRecord>[];
           final list = _filtered(records);
 
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Claimed Inventory',
-                        style: TextStyle(
-                          fontFamily:
-                              Theme.of(context).textTheme.titleLarge?.fontFamily,
-                          color: AppTheme.primaryGreen,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Review and manage possession ownership claims submitted by students and staff.',
-                        style: TextStyle(
-                          color: _muted,
-                          fontSize: 14,
-                          height: 1.45,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE6E2DB),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: TextField(
-                          controller: _search,
-                          onChanged: (_) => setState(() {}),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by items',
-                            hintStyle: TextStyle(
-                              color: Color(0x99404943),
-                              fontSize: 15,
-                            ),
-                            prefixIcon:
-                                Icon(Icons.search, color: Color(0xFF77756F)),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _filterChip(
-                            label: 'ALL',
-                            selected: !_pendingOnly,
-                            onTap: () => setState(() => _pendingOnly = false),
-                          ),
-                          const SizedBox(width: 10),
-                          _filterChip(
-                            label: 'PENDING',
-                            selected: _pendingOnly,
-                            showFilterIcon: true,
-                            onTap: () => setState(() => _pendingOnly = true),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-              if (list.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
+          return RefreshIndicator(
+            onRefresh: _reload,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.inventory_2_outlined,
-                            size: 56, color: AppTheme.grayText),
-                        const SizedBox(height: 12),
                         Text(
-                          _pendingOnly
-                              ? 'No pending claims match your filters.'
-                              : 'No claims match your search.',
-                          textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: AppTheme.grayText, fontSize: 15),
+                          'Claimed Inventory',
+                          style: TextStyle(
+                            fontFamily:
+                                Theme.of(context).textTheme.titleLarge?.fontFamily,
+                            color: AppTheme.primaryGreen,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            height: 1.15,
+                            letterSpacing: -0.5,
+                          ),
                         ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Review and manage possession ownership claims submitted by students and staff.',
+                          style: TextStyle(
+                            color: _muted,
+                            fontSize: 14,
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE6E2DB),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: TextField(
+                            controller: _search,
+                            onChanged: (_) => setState(() {}),
+                            decoration: const InputDecoration(
+                              hintText: 'Search by items',
+                              hintStyle: TextStyle(
+                                color: Color(0x99404943),
+                                fontSize: 15,
+                              ),
+                              prefixIcon:
+                                  Icon(Icons.search, color: Color(0xFF77756F)),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            _filterChip(
+                              label: 'ALL',
+                              selected: !_pendingOnly,
+                              onTap: () => setState(() => _pendingOnly = false),
+                            ),
+                            const SizedBox(width: 10),
+                            _filterChip(
+                              label: 'PENDING',
+                              selected: _pendingOnly,
+                              showFilterIcon: true,
+                              onTap: () => setState(() => _pendingOnly = true),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  sliver: SliverList.separated(
-                    itemCount: list.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 20),
-                    itemBuilder: (context, index) {
-                      final record = list[index];
-                      final claim = record.toUiClaim();
-                      return AdminClaimCard(
-                        title: claim.title,
-                        location: claim.location,
-                        imageUrl: claim.imageUrl ?? '',
-                        date: _formatDate(claim.date),
-                        onPressed: () => context.go('/admin/claims/${claim.id}'),
-                      );
-                    },
-                  ),
                 ),
-            ],
+                if (list.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inventory_2_outlined,
+                              size: 56, color: AppTheme.grayText),
+                          const SizedBox(height: 12),
+                          Text(
+                            _pendingOnly
+                                ? 'No pending claims match your filters.'
+                                : 'No claims match your search.',
+                            textAlign: TextAlign.center,
+                            style:
+                                TextStyle(color: AppTheme.grayText, fontSize: 15),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                    sliver: SliverList.separated(
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 20),
+                      itemBuilder: (context, index) {
+                        final record = list[index];
+                        final claim = record.toUiClaim();
+                        return AdminClaimCard(
+                          title: claim.title,
+                          location: claim.location,
+                          imageUrl: claim.imageUrl ?? '',
+                          date: _formatDate(claim.date),
+                          onPressed: () async {
+                            final result = await context.push<bool>('/admin/claims/${claim.id}');
+                            if (result == true) {
+                              _reload();
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       ),
