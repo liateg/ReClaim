@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/api_config.dart';
 
 enum AppUserRole { user, admin }
 
@@ -95,5 +96,5 @@ class AppSession {
     return '';
   }
 
-  static const String institutionHintHost = 'http://10.0.2.2:3000';
+  static String get institutionHintHost => ApiConfig.baseUrl;
 }

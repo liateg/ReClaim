@@ -2,16 +2,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/cache/sqlite_cache.dart';
+import '../../../../core/session/services/auth_service.dart';
 import '../models/report_model.dart';
 
 class ReportService {
   final Dio _dio = Dio();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final SqliteCache _cache = SqliteCache();
-  static const String baseUrl = 'http://localhost:3000';
 
   ReportService() {
-    _dio.options.baseUrl = baseUrl;
+    _dio.options.baseUrl = AuthService.baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
   }
 

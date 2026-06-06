@@ -2,12 +2,13 @@ import 'package:dio/dio.dart';
 import 'package:frontend/core/session/app_session.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:frontend/core/cache/sqlite_cache.dart';
+import 'package:frontend/core/config/api_config.dart';
 
 class AuthService {
   final Dio _dio = Dio();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  static const String baseUrl = 'http://localhost:3000';
+  static String get baseUrl => ApiConfig.baseUrl;
   static String? _testToken;
 
   static void setTestToken(String? token) => _testToken = token;
