@@ -6,7 +6,14 @@ import 'package:frontend/utils/theme/app_theme.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import '../../Riverpod/claims_provider.dart';
 import '../../../reports/presentation/screens/submit_feedback_screen.dart';
-
+import 'package:frontend/core/session/services/auth_service.dart';
+String _getFullImageUrl(String? imageUrl) {
+  if (imageUrl == null || imageUrl.isEmpty) return '';
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  return '${AuthService.baseUrl}$imageUrl';
+}
 Widget _buildClaimImage(String? imageUrl) {
   if (imageUrl == null || imageUrl.isEmpty) {
     return Container(
@@ -19,8 +26,6 @@ Widget _buildClaimImage(String? imageUrl) {
     );
   }
 
-  // Check if it's a network image
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     return Image.network(
       imageUrl,
       fit: BoxFit.cover,
@@ -33,7 +38,7 @@ Widget _buildClaimImage(String? imageUrl) {
         ),
       ),
     );
-  }
+  
 
   // Otherwise treat as local file
   return Image.file(
@@ -115,7 +120,7 @@ class ClaimDetailScreen extends ConsumerWidget {
                   'APPROVED';
           final status =
               (claim['status']?.toString() ?? 'pending').toUpperCase();
-          final imageUrl = claim['imageUrl']?.toString().trim();
+          final imageUrl = _getFullImageUrl(claim['imageUrl']?.toString().trim());
           final title = claim['title']?.toString() ?? 'Untitled Item';
           final description =
               claim['description']?.toString() ?? 'No description';

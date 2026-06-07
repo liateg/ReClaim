@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
+import 'package:frontend/core/session/services/auth_service.dart';
 import '../../Riverpod/claims_provider.dart';
 import './claim_empty.dart';
 import '../widgets/claim_card.dart';
@@ -11,6 +12,14 @@ import 'claim_delete.dart';
 
 class ClaimsScreen extends ConsumerWidget {
   const ClaimsScreen({super.key});
+  String _getFullImageUrl(String? imageUrl) {
+  if (imageUrl == null || imageUrl.isEmpty) return '';
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  return '${AuthService.baseUrl}$imageUrl';
+}
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -76,8 +85,8 @@ class ClaimsScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                     final claimData = claims[index];
+                      final imageUrl1 = _getFullImageUrl(claimData['imageUrl']?.toString().trim());
 
-                    // Parse claim data from backend response
                     final claimMap = {
                       'id': claimData['id']?.toString() ?? '',
                       'title': claimData['title']?.toString() ?? '',
@@ -88,7 +97,7 @@ class ClaimsScreen extends ConsumerWidget {
                               '',
                       'status': (claimData['status']?.toString() ?? 'pending')
                           .toUpperCase(),
-                      'imageUrl': claimData['imageUrl']?.toString() ?? '',
+                      'imageUrl': imageUrl1,
                       'filedDate':
                           claimData['createdAt']?.toString().split('T')[0] ??
                               claimData['date']?.toString().split(' ')[0] ??
@@ -137,7 +146,13 @@ class ClaimsScreen extends ConsumerWidget {
                           }
                         }
                       },
-                      onTap: () => context.go('/claims/${claimMap['id']}'),
+                      onTap: () async {
+  final result = await context.push('/claims/${claimMap['id']}');
+  
+  if (result == true) {
+    ref.invalidate(claimsListProvider);
+  }
+},
                     );
                   },
                 ),
