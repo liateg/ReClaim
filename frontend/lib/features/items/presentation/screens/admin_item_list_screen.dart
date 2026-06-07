@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/config/api_config.dart';
 import 'package:frontend/features/items/presentation/screens/edit_item_screen.dart';
 import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
@@ -282,7 +283,7 @@ class _AdminItemListScreenState extends ConsumerState<AdminItemListScreen> {
   }
 
   Widget _adminThumb(String? imageUrl) {
-    final url = imageUrl?.trim() ?? '';
+    final url = ApiConfig.resolveImageUrl(imageUrl);
     if (url.isEmpty) {
       return Container(
         width: 70,

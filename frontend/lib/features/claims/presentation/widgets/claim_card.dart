@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:frontend/core/config/api_config.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 
 Widget _buildCardImage(String? imageUrl) {
@@ -14,10 +15,13 @@ Widget _buildCardImage(String? imageUrl) {
     );
   }
 
-  // Check if it's a network image
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  // Network image (absolute URL) or a backend upload path (e.g. /uploads/x.jpg)
+  if (imageUrl.startsWith('http://') ||
+      imageUrl.startsWith('https://') ||
+      imageUrl.startsWith('/uploads') ||
+      imageUrl.startsWith('uploads')) {
     return Image.network(
-      imageUrl,
+      ApiConfig.resolveImageUrl(imageUrl),
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
         color: AppTheme.grayBorder.withValues(alpha: 0.45),

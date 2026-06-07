@@ -27,7 +27,7 @@ Widget _buildClaimImage(String? imageUrl) {
   }
 
     return Image.network(
-      imageUrl,
+      _getFullImageUrl(imageUrl),
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
         color: AppTheme.grayBorder.withValues(alpha: 0.4),

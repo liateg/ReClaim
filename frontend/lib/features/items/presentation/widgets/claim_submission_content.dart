@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/config/api_config.dart';
 import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/features/claims/Riverpod/claims_provider.dart';
 
@@ -59,7 +60,8 @@ class _ClaimSubmissionContentState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final imageUrl = (widget.item['image_url'] as String?)?.trim() ?? '';
+    final imageUrl =
+        ApiConfig.resolveImageUrl(widget.item['image_url'] as String?);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),

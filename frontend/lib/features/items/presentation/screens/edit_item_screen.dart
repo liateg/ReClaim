@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/config/api_config.dart';
 import 'package:frontend/features/items/Riverpod/items_provider.dart';
 import 'package:frontend/shared/widgets/appbar.dart';
 import 'package:image_picker/image_picker.dart';
@@ -150,7 +151,7 @@ class _EditItemScreenState extends ConsumerState<EditItemScreen> {
         fit: BoxFit.cover,
       );
     }
-    final url = _existingImageUrl.trim();
+    final url = ApiConfig.resolveImageUrl(_existingImageUrl);
     if (url.isEmpty) {
       return Container(
         height: 180,

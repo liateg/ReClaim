@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/config/api_config.dart';
 import 'package:frontend/utils/theme/app_theme.dart';
 
 class AdminClaimCard extends StatelessWidget {
@@ -44,7 +45,7 @@ class AdminClaimCard extends StatelessWidget {
                     ),
                   )
                 : Image.network(
-                    imageUrl,
+                    ApiConfig.resolveImageUrl(imageUrl),
                     height: 240,
                     width: double.infinity,
                     fit: BoxFit.cover,

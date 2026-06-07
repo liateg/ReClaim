@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:frontend/core/config/api_config.dart';
 import 'package:frontend/features/claims/Riverpod/claims_provider.dart';
 
 class ItemCard extends ConsumerWidget {
@@ -11,7 +12,7 @@ class ItemCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imageUrl = (item['image_url'] as String?)?.trim() ?? '';
+    final imageUrl = ApiConfig.resolveImageUrl(item['image_url'] as String?);
     final title = (item['title'] as String?) ?? 'Untitled item';
     final location = (item['location'] as String?) ?? 'Unknown location';
     final status = (item['status'] as String?) ?? 'available';

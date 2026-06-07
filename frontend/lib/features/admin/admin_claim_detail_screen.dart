@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/api_config.dart';
 import '../../shared/widgets/appbar.dart';
 import '../../utils/theme/app_theme.dart';
 import '../claims/data/model/claim_model.dart' as ui_claim;
@@ -412,7 +413,7 @@ class _AdminClaimDetailScreenState extends State<AdminClaimDetailScreen> {
                         size: 56, color: Color(0xFF77756F)),
                   )
                 : Image.network(
-                    claim.imageUrl!,
+                    ApiConfig.resolveImageUrl(claim.imageUrl),
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFFE6E2DB),
